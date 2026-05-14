@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NXSlab BKP — Connexion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #08090e;
+      --bg-card:   rgba(0,200,255,0.04);
+      --border:    rgba(0,200,255,0.10);
+      --border-h:  rgba(0,200,255,0.30);
+      --accent:    #00c8ff;
+      --text:      #dde4f0;
+      --text-muted:#55667a;
+      --text-dim:  #8898aa;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-sans: 'Inter', sans-serif;
+      --down:      #ff4757;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 10% 0%,  rgba(0,87,255,0.10) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 90% 100%, rgba(0,200,255,0.07) 0%, transparent 55%);
+      pointer-events: none; z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(0,200,255,0.06) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .wrap {
+      position: relative; z-index: 1;
+      width: 100%; max-width: 400px;
+      padding: 24px;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+    .logo .ac { color: var(--accent); }
+
+    .sub {
+      font-family: var(--font-mono);
+      font-size: 0.70rem;
+      color: var(--text-muted);
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.6;
+    }
+
+    .field { margin-bottom: 20px; }
+
+    .field label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .field-wrap { position: relative; }
+
+    .field input {
+      width: 100%;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 40px 12px 14px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .field input:focus {
+      border-color: var(--border-h);
+      box-shadow: 0 0 0 3px rgba(0,200,255,0.08);
+    }
+    .field input::placeholder { color: var(--text-muted); }
+
+    .toggle-pw {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--text-muted);
+      cursor: pointer; padding: 4px;
+      font-size: 0.8rem;
+      transition: color .2s;
+    }
+    .toggle-pw:hover { color: var(--accent); }
+
+    .error {
+      background: rgba(255,71,87,0.08);
+      border: 1px solid rgba(255,71,87,0.25);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--down);
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      width: 100%;
+      background: rgba(0,200,255,0.08);
+      border: 1px solid var(--border-h);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: background .2s, box-shadow .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover { background: rgba(0,200,255,0.14); box-shadow: 0 0 20px rgba(0,200,255,0.14); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .foot {
+      text-align: center;
+      margin-top: 24px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+    .foot strong { color: var(--accent); }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .spin { animation: spin 0.8s linear infinite; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="logo">NXS<span class="ac">_</span>BKP</div>
+    <div class="sub">// backup manager &middot; authentification</div>
+
+    <div class="card">
+      {% if error %}
+      <div class="error"><i class="fa-solid fa-triangle-exclamation"></i> {{ error }}</div>
+      {% endif %}
+
+      <div id="err" class="error" style="display:none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="err-text"></span>
+      </div>
+
+      <form id="form">
+        <div class="field">
+          <label>Utilisateur</label>
+          <div class="field-wrap">
+            <input type="text" id="u" placeholder="admin" autocomplete="username" required />
+          </div>
+        </div>
+        <div class="field">
+          <label>Mot de passe</label>
+          <div class="field-wrap">
+            <input type="password" id="p" placeholder="••••••••" autocomplete="current-password" required />
+            <button type="button" class="toggle-pw" id="tpw">
+              <i class="fa-solid fa-eye" id="eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn" id="btn">
+          <i class="fa-solid fa-right-to-bracket" id="btn-icon"></i>
+          Connexion
+        </button>
+      </form>
+    </div>
+
+    <div class="foot"><strong>NXSlab</strong> — infrastructure de NeXoS_20</div>
+  </div>
+
+  <script>
+    const pw = document.getElementById('p');
+    document.getElementById('tpw').onclick = () => {
+      pw.type = pw.type === 'password' ? 'text' : 'password';
+      document.getElementById('eye').className = pw.type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+    };
+
+    document.getElementById('form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('btn');
+      const ico = document.getElementById('btn-icon');
+      const err = document.getElementById('err');
+      err.style.display = 'none';
+      btn.disabled = true;
+      ico.className = 'fa-solid fa-rotate spin';
+      try {
+        const r = await fetch('/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({username: document.getElementById('u').value, password: pw.value})
+        });
+        const d = await r.json();
+        if (d.ok) { ico.className = 'fa-solid fa-check'; location.href = '/'; }
+        else { showErr(d.error || 'Erreur inconnue'); }
+      } catch { showErr('Erreur de connexion'); }
+      finally { btn.disabled = false; if (!ico.className.includes('check')) ico.className = 'fa-solid fa-right-to-bracket'; }
+    });
+
+    function showErr(msg) {
+      const err = document.getElementById('err');
+      document.getElementById('err-text').textContent = msg;
+      err.style.display = 'flex';
+      document.getElementById('btn-icon').className = 'fa-solid fa-right-to-bracket';
+    }
+  </script>
+</body>
+</html>
