@@ -531,10 +531,10 @@ function openModal(type, arg) {
     },
     'ftp-user-add': {
       title: 'Ajouter un utilisateur FTP',
-      sub: 'Crée un utilisateur système avec répertoire home.',
-      fields: fld("Nom d'utilisateur","m-user","exemple") + fld("Mot de passe","m-pass","min. 6 car.","password") + fld("Home (optionnel)","m-home","/home/exemple") + chk("FTP uniquement (pas de shell SSH)","m-ftp-only",true,"L'utilisateur ne pourra pas se connecter en SSH ni en console"),
+      sub: 'Accès lecture/écriture au répertoire de données uniquement. Pas de shell SSH.',
+      fields: fld("Nom d'utilisateur","m-user","exemple") + fld("Mot de passe","m-pass","min. 6 car.","password"),
       confirm: 'Créer',
-      action: async () => { await api('/api/ftp/users/add',{method:'POST',body:{username:v('m-user'),password:v('m-pass'),home:v('m-home'),ftp_only:vc('m-ftp-only')}}); refreshFtpUsers(); toast('Utilisateur créé','ok'); }
+      action: async () => { await api('/api/ftp/users/add',{method:'POST',body:{username:v('m-user'),password:v('m-pass')}}); refreshFtpUsers(); toast('Utilisateur créé','ok'); }
     },
     'ftp-user-passwd': {
       title: `Mot de passe — ${arg}`,

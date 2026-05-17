@@ -34,6 +34,15 @@ def svc_state(name: str) -> str:
     return {'active': 'up', 'inactive': 'inactive', 'failed': 'failed'}.get(s, 'down')
 
 
+def setup_data_access(username: str) -> None:
+    from config import get_data_dir
+    data_dir = get_data_dir()
+    run(['groupadd',  '-f',  'nxslab-data'])
+    run(['chgrp',  'nxslab-data', data_dir])
+    run(['chmod',  '2775',        data_dir])
+    run(['usermod', '-a', '-G', 'nxslab-data', username])
+
+
 def human_size(n):
     n = float(n)
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:

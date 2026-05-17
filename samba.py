@@ -2,7 +2,7 @@
 import configparser
 from flask import Blueprint, request, jsonify
 from auth import login_required, admin_required
-from helpers import run, shell, valid_username
+from helpers import run, shell, valid_username, setup_data_access
 
 samba_bp = Blueprint('samba', __name__)
 
@@ -85,6 +85,7 @@ def samba_user_add():
     if len(password) < 6:           return jsonify({'error': 'Mot de passe trop court (min. 6 car.)'}), 400
     if not run(['id', username])['ok']:
         run(['useradd', '-M', '-s', '/usr/sbin/nologin', username])
+    setup_data_access(username)
     r = run(['smbpasswd', '-a', '-s', username], stdin=f"{password}\n{password}\n")
     return jsonify({'ok': r['ok'], 'message': r['out'] or r['err']})
 

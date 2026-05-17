@@ -1,8 +1,9 @@
 """Routes FTP — /api/ftp/*"""
-import os, re
+import os
 from flask import Blueprint, request, jsonify
 from auth import login_required, admin_required
-from helpers import run, shell, valid_username
+from helpers import run, shell, valid_username, setup_data_access
+from config import get_data_dir
 
 ftp_bp = Blueprint('ftp', __name__)
 
@@ -72,18 +73,15 @@ def ftp_user_add():
     d        = request.json or {}
     username = d.get('username', '').strip().lower()
     password = d.get('password', '')
-    home     = (d.get('home', '') or f'/home/{username}').strip()
-    ftp_only = bool(d.get('ftp_only', True))
-    if not valid_username(username):                 return jsonify({'error': "Nom d'utilisateur invalide"}), 400
-    if len(password) < 6:                           return jsonify({'error': 'Mot de passe trop court (min. 6 car.)'}), 400
-    if not re.match(r'^/[a-zA-Z0-9/_.-]+$', home): return jsonify({'error': 'Chemin invalide'}), 400
-    shell_bin = '/usr/sbin/nologin' if ftp_only else '/bin/bash'
-    r = run(['useradd', '-m', '-d', home, '-s', shell_bin, username])
-    if not r['ok'] and 'already exists' not in r['err']:
+    data_dir = get_data_dir()
+    if not valid_username(username): return jsonify({'error': "Nom d'utilisateur invalide"}), 400
+    if len(password) < 6:           return jsonify({'error': 'Mot de passe trop court (min. 6 car.)'}), 400
+    r = run(['useradd', '-d', data_dir, '-s', '/usr/sbin/nologin', username])
+    if not r['ok'] and 'already exists' not in (r['err'] or ''):
         return jsonify({'error': r['err']}), 500
-    os.makedirs(home, exist_ok=True)
-    run(['chown', f'{username}:{username}', home])
-    run(['chmod', '755', home])
+    if 'already exists' in (r['err'] or ''):
+        run(['usermod', '-d', data_dir, '-s', '/usr/sbin/nologin', username])
+    setup_data_access(username)
     pw_r = run(['chpasswd'], stdin=f"{username}:{password}\n")
     if not pw_r['ok']:
         return jsonify({'error': pw_r['err'] or 'Erreur mot de passe'}), 500
