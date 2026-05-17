@@ -1,0 +1,58 @@
+<!-- ═══════════════════ FTP ═══════════════════ -->
+<div id="tab-ftp" class="tab-content">
+
+  <div class="sec-head"><div class="sec-label">// vsftpd · contrôle</div></div>
+  <div class="ctrl-panel">
+    <span class="ctrl-label">
+      <span class="svc-badge" id="ctrl-badge-ftp" data-s="checking">
+        <span class="svc-dot"></span><span class="svc-lbl">vsftpd</span>
+      </span>
+      <span style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);margin-left:10px;">
+        <i class="fa-solid fa-plug" style="color:var(--accent);font-size:.55rem;"></i>
+        <span id="ftp-conn-count">—</span> connexion(s) active(s)
+      </span>
+    </span>
+    <button class="btn-ctrl start"   onclick="svcCtrl('ftp','start')">  <i class="fa-solid fa-play"></i> Démarrer</button>
+    <button class="btn-ctrl stop"    onclick="svcCtrl('ftp','stop')">   <i class="fa-solid fa-stop"></i> Arrêter</button>
+    <button class="btn-ctrl restart" onclick="svcCtrl('ftp','restart')"><i class="fa-solid fa-rotate"></i> Redémarrer</button>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="sec-head">
+        <div class="sec-label">// utilisateurs FTP</div>
+        <button class="btn-add" onclick="openModal('ftp-user-add')"><i class="fa-solid fa-plus"></i> Ajouter</button>
+      </div>
+      <div class="panel" style="margin-bottom:24px;">
+        <table>
+          <thead><tr><th>Utilisateur</th><th>Home</th><th>Type</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="ftp-users-tbody"><tr><td colspan="5" class="tbl-empty">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-head">
+        <div class="sec-label">// connexions &amp; journal</div>
+        <button class="btn-sm" onclick="refreshFtpConns()"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+      </div>
+      <div class="output-box" id="ftp-conns-box" style="max-height:180px;">Cliquez sur Actualiser</div>
+      <div class="sec-head" style="margin-top:16px;"><div class="sec-label">// journal vsftpd</div></div>
+      <div class="output-box" id="ftp-log-box" style="max-height:180px;">—</div>
+    </div>
+  </div>
+
+  <div class="config-section">
+    <div class="config-toggle" id="ftp-cfg-toggle" onclick="toggleConfig('ftp')">
+      <span class="config-toggle-label"><i class="fa-solid fa-file-code"></i> vsftpd.conf</span>
+      <i class="fa-solid fa-chevron-down config-chevron"></i>
+    </div>
+    <div class="config-body" id="ftp-cfg-body">
+      <div class="config-actions">
+        <button class="btn-sm primary" onclick="saveFtpConfig()"><i class="fa-solid fa-floppy-disk"></i> Sauvegarder</button>
+        <button class="btn-sm" onclick="loadFtpConfig()"><i class="fa-solid fa-rotate"></i> Recharger</button>
+      </div>
+      <textarea class="code" id="ftp-cfg-ta" placeholder="Chargement..."></textarea>
+    </div>
+  </div>
+</div>

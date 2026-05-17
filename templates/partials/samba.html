@@ -1,0 +1,63 @@
+<!-- ═══════════════════ SAMBA ═══════════════════ -->
+<div id="tab-samba" class="tab-content">
+
+  <div class="sec-head"><div class="sec-label">// samba · contrôle</div></div>
+  <div class="ctrl-panel">
+    <span class="ctrl-label">
+      <span class="svc-badge" id="ctrl-badge-samba" data-s="checking">
+        <span class="svc-dot"></span><span class="svc-lbl">smbd</span>
+      </span>
+    </span>
+    <button class="btn-ctrl start"   onclick="svcCtrl('samba','start')">  <i class="fa-solid fa-play"></i> Démarrer</button>
+    <button class="btn-ctrl stop"    onclick="svcCtrl('samba','stop')">   <i class="fa-solid fa-stop"></i> Arrêter</button>
+    <button class="btn-ctrl restart" onclick="svcCtrl('samba','restart')"><i class="fa-solid fa-rotate"></i> Redémarrer</button>
+    <button class="btn-ctrl"         onclick="svcCtrl('samba','reload')"> <i class="fa-solid fa-arrows-rotate"></i> Recharger</button>
+  </div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title"><i class="fa-solid fa-folder-tree"></i> Partages</span>
+        <button class="btn-sm" onclick="refreshSambaShares()"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+      </div>
+      <div>
+        <table>
+          <thead><tr><th>Nom</th><th>Chemin</th><th>RO</th></tr></thead>
+          <tbody id="shares-tbody"><tr><td colspan="3" class="tbl-empty">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title"><i class="fa-solid fa-users"></i> Utilisateurs Samba</span>
+        <button class="btn-add" onclick="openModal('samba-user-add')"><i class="fa-solid fa-plus"></i> Ajouter</button>
+      </div>
+      <div>
+        <table>
+          <thead><tr><th>Utilisateur</th><th>UID</th><th></th></tr></thead>
+          <tbody id="samba-users-tbody"><tr><td colspan="3" class="tbl-empty">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-head">
+    <div class="sec-label">// connexions actives</div>
+    <button class="btn-sm" onclick="refreshSambaConns()"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+  </div>
+  <div class="output-box" id="samba-conns">Chargement...</div>
+
+  <div class="config-section">
+    <div class="config-toggle" id="samba-cfg-toggle" onclick="toggleConfig('samba')">
+      <span class="config-toggle-label"><i class="fa-solid fa-file-code"></i> smb.conf</span>
+      <i class="fa-solid fa-chevron-down config-chevron"></i>
+    </div>
+    <div class="config-body" id="samba-cfg-body">
+      <div class="config-actions">
+        <button class="btn-sm primary" onclick="saveSambaConfig()"><i class="fa-solid fa-floppy-disk"></i> Sauvegarder</button>
+        <button class="btn-sm" onclick="loadSambaConfig()"><i class="fa-solid fa-rotate"></i> Recharger</button>
+      </div>
+      <textarea class="code" id="samba-cfg-ta" placeholder="Chargement..."></textarea>
+    </div>
+  </div>
+</div>

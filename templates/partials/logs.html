@@ -1,0 +1,27 @@
+<!-- ═══════════════════ LOGS ═══════════════════ -->
+<div id="tab-logs" class="tab-content">
+
+  <div class="sec-head"><div class="sec-label">// journaux système</div></div>
+
+  <div class="log-controls">
+    <div class="btn-group" id="log-svc-group">
+      <button class="btn-sm active" onclick="setLogSvc('samba',this)"><i class="fa-solid fa-folder-open"></i> Samba</button>
+      <button class="btn-sm"        onclick="setLogSvc('ftp',this)">  <i class="fa-solid fa-network-wired"></i> FTP</button>
+      <button class="btn-sm"        onclick="setLogSvc('system',this)"><i class="fa-solid fa-server"></i> Système</button>
+    </div>
+    <select class="ctrl-select" id="log-lines">
+      <option value="50">50 lignes</option>
+      <option value="100" selected>100 lignes</option>
+      <option value="200">200 lignes</option>
+      <option value="500">500 lignes</option>
+    </select>
+    <button class="btn-sm" id="log-ar-btn" onclick="toggleLogAR()">
+      <i class="fa-solid fa-pause" id="log-ar-ico"></i> Auto-refresh
+    </button>
+    <button class="btn-sm primary" onclick="fetchLogs()">
+      <i class="fa-solid fa-rotate" id="log-refresh-ico"></i> Actualiser
+    </button>
+  </div>
+
+  <div class="log-box" id="log-box">Sélectionnez un service et cliquez sur Actualiser.</div>
+</div>

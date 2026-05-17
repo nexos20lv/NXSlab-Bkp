@@ -1,0 +1,90 @@
+<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+<div id="tab-dashboard" class="tab-content active">
+
+  <div class="hero-status">
+    <span class="hero-dot checking" id="hero-dot"></span>
+    <span id="hero-text">vérification en cours...</span>
+    <div class="hero-meta">
+      <span><i class="fa-solid fa-clock"></i><span id="hero-uptime">—</span></span>
+      <span><i class="fa-solid fa-rotate" id="hero-refresh-ico" style="cursor:pointer" title="Rafraîchir"></i><span id="hero-ts">—</span></span>
+    </div>
+  </div>
+
+  <div class="sec-head"><div class="sec-label">// services</div></div>
+  <div class="cards-grid">
+    <div class="card" style="--card-color:#1c9fe0;">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-folder-open"></i></div>
+        <span class="svc-badge" id="badge-samba" data-s="checking">
+          <span class="svc-dot"></span><span class="svc-lbl">—</span>
+        </span>
+      </div>
+      <div>
+        <div class="card-name">Samba</div>
+        <p class="card-desc">Partage de fichiers SMB/CIFS sur le réseau local. Gestion des utilisateurs et des partages.</p>
+      </div>
+      <span class="card-tag">smb · cifs</span>
+    </div>
+    <div class="card" style="--card-color:#f38020;">
+      <div class="card-top">
+        <div class="card-icon"><i class="fa-solid fa-network-wired"></i></div>
+        <span class="svc-badge" id="badge-ftp" data-s="checking">
+          <span class="svc-dot"></span><span class="svc-lbl">—</span>
+        </span>
+      </div>
+      <div>
+        <div class="card-name">vsftpd</div>
+        <p class="card-desc">Serveur FTP sécurisé pour le transfert de fichiers. Gestion des utilisateurs système.</p>
+      </div>
+      <span class="card-tag">ftp · vsftpd</span>
+    </div>
+  </div>
+
+  <div class="sec-head"><div class="sec-label">// ressources système</div></div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label"><i class="fa-solid fa-microchip"></i> CPU</div>
+      <div class="metric-val" id="cpu-val">—%</div>
+      <div class="metric-sub" id="load-val">load: —</div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" id="cpu-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label"><i class="fa-solid fa-memory"></i> Mémoire</div>
+      <div class="metric-val" id="mem-val">— MB</div>
+      <div class="metric-sub" id="mem-sub">— / — MB</div>
+      <div class="progress-wrap">
+        <div class="progress-info"><span id="mem-pct">0%</span><span id="mem-free">—</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="mem-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="metric-card" style="grid-column: 1 / -1;">
+      <div class="metric-label"><i class="fa-solid fa-hard-drive"></i> Stockage</div>
+      <div class="disk-list" id="disk-list">
+        <div style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);">Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backup VPS summary -->
+  <div id="bkp-summary-section" style="display:none;">
+    <div class="sec-head">
+      <div class="sec-label">// état des backups vps</div>
+      <button class="btn-sm" onclick="document.querySelector('[data-tab=backup]').click()">
+        <i class="fa-solid fa-arrow-right"></i> Gérer
+      </button>
+    </div>
+    <div class="bkp-summary-grid" id="bkp-summary-grid"></div>
+  </div>
+
+  <!-- Remote VPS stats -->
+  <div id="remote-stats-section" style="display:none;">
+    <div class="sec-head">
+      <div class="sec-label">// vps distants — ressources</div>
+      <button class="btn-sm" onclick="refreshAllRemoteStats()"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+    </div>
+    <div class="remote-stats-grid" id="remote-stats-grid"></div>
+  </div>
+
+</div>

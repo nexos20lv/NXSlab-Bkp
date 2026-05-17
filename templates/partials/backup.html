@@ -1,0 +1,383 @@
+<!-- ═══════════════════ BACKUP ═══════════════════ -->
+<div id="tab-backup" class="tab-content">
+
+  <div class="sec-head">
+    <div class="sec-label">// vps distants</div>
+    <button class="btn-add" onclick="openModal('remote-add')">
+      <i class="fa-solid fa-plus"></i> Ajouter un VPS
+    </button>
+  </div>
+  <div class="remote-cards" id="remote-cards" style="margin-bottom:20px;"></div>
+
+  <div id="bkp-no-remote" style="text-align:center;padding:48px 0;font-family:var(--font-mono);font-size:.80rem;color:var(--text-muted);">
+    <i class="fa-solid fa-server" style="font-size:2rem;margin-bottom:12px;display:block;opacity:.3;"></i>
+    Aucun VPS configuré.<br>Cliquez sur <strong>+ Ajouter un VPS</strong> pour commencer.
+  </div>
+
+  <div id="bkp-remote-detail" style="display:none;">
+
+    <div class="bkp-status-bar">
+      <span class="bkp-status-dot" id="bkp-dot"></span>
+      <span id="bkp-status-text">Chargement...</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm" id="bkp-run-btn" onclick="runBackup()">
+          <i class="fa-solid fa-play" id="bkp-run-ico"></i> Lancer maintenant
+        </button>
+        <button class="btn-sm" onclick="refreshBackupStatus()">
+          <i class="fa-solid fa-rotate"></i>
+        </button>
+      </div>
+    </div>
+
+    <div id="bkp-dep-warn" style="display:none;border-color:rgba(255,170,0,.35);" class="bkp-status-bar">
+      <i class="fa-solid fa-triangle-exclamation" style="color:var(--warn);"></i>
+      <span id="bkp-dep-text" style="font-family:var(--font-mono);font-size:.75rem;color:var(--warn);flex:1;"></span>
+    </div>
+
+    <div class="bkp-grid">
+
+      <!-- VPS distant -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-server"></i> VPS Distant</span>
+          <button class="btn-sm" id="bkp-test-btn" onclick="testConnection()">
+            <i class="fa-solid fa-plug" id="bkp-test-ico"></i> Tester
+          </button>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-row">
+            <div class="bkp-field">
+              <label>Hôte / IP</label>
+              <input type="text" id="r-host" placeholder="192.168.1.x ou domain.tld" />
+            </div>
+            <div class="bkp-field" style="max-width:90px;">
+              <label>Port SSH</label>
+              <input type="number" id="r-port" value="22" min="1" max="65535" />
+            </div>
+          </div>
+          <div class="bkp-field">
+            <label>Utilisateur</label>
+            <input type="text" id="r-user" placeholder="root" />
+          </div>
+          <div class="bkp-field">
+            <label>Authentification</label>
+            <select id="r-auth" onchange="toggleAuthFields()">
+              <option value="key">Clé SSH (recommandé)</option>
+              <option value="password">Mot de passe</option>
+            </select>
+          </div>
+          <div id="r-key-fields">
+            <div class="bkp-field">
+              <label>Chemin clé privée</label>
+              <input type="text" id="r-key-path" placeholder="/root/.ssh/id_rsa" />
+            </div>
+            <div class="bkp-field">
+              <label>Passphrase (optionnel)</label>
+              <input type="password" id="r-key-passphrase" placeholder="laisser vide si aucune" />
+            </div>
+          </div>
+          <div id="r-pw-fields" style="display:none;">
+            <div class="bkp-field">
+              <label>Mot de passe SSH</label>
+              <input type="password" id="r-password" placeholder="••••••••" />
+            </div>
+          </div>
+          <div id="bkp-test-out" style="display:none;" class="output-box" style="max-height:80px;margin:0;font-size:.70rem;"></div>
+        </div>
+      </div>
+
+      <!-- Cibles & stockage -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-bullseye"></i> Cibles &amp; Stockage</span>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>Cibles à sauvegarder</label>
+            <div class="bkp-check-group">
+              <label class="bkp-check"><input type="checkbox" id="t-docker" checked /><i class="fa-brands fa-docker"></i> Docker</label>
+              <label class="bkp-check"><input type="checkbox" id="t-websites" checked /><i class="fa-solid fa-globe"></i> Sites web</label>
+              <label class="bkp-check"><input type="checkbox" id="t-configs" checked /><i class="fa-solid fa-file-code"></i> Configs</label>
+            </div>
+          </div>
+          <div class="bkp-field">
+            <label>Sous-dossier de stockage</label>
+            <input type="text" id="b-subdir" placeholder="remote-vps" />
+            <span style="font-family:var(--font-mono);font-size:.62rem;color:var(--text-muted);">→ /srv/nxslab-bkp/backups/<span id="b-subdir-preview">remote-vps</span>/</span>
+          </div>
+          <div class="bkp-field">
+            <label>Compression</label>
+            <select id="b-compression">
+              <option value="gz">gzip (.tar.gz) — recommandé</option>
+              <option value="bz2">bzip2 (.tar.bz2) — meilleur taux</option>
+              <option value="none">Aucune (.tar) — plus rapide</option>
+            </select>
+          </div>
+          <div class="bkp-field">
+            <label>Nombre max de backups <span id="b-max-label" style="color:var(--accent);">7</span></label>
+            <input type="range" id="b-max" min="1" max="30" value="7"
+              style="width:100%;accent-color:var(--accent);"
+              oninput="document.getElementById('b-max-label').textContent=this.value" />
+            <span style="font-family:var(--font-mono);font-size:.62rem;color:var(--text-muted);">Le plus ancien est supprimé automatiquement quand la limite est atteinte</span>
+          </div>
+          <div class="bkp-field">
+            <label>Supprimer après <span id="b-days-label" style="color:var(--accent);">0</span> jours <span style="color:var(--text-muted);">(0 = désactivé)</span></label>
+            <input type="range" id="b-days" min="0" max="365" value="0"
+              style="width:100%;accent-color:var(--accent);"
+              oninput="document.getElementById('b-days-label').textContent=this.value" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Planification -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-clock"></i> Planification</span>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>Activer la planification automatique</label>
+            <label class="bkp-check" style="width:fit-content;">
+              <input type="checkbox" id="b-sched-enabled" />
+              <i class="fa-solid fa-calendar-check"></i> Activer
+            </label>
+          </div>
+          <div class="bkp-field">
+            <label>Expression cron</label>
+            <div class="schedule-presets">
+              <button class="schedule-preset" onclick="setCron('0 2 * * *')">Tous les jours 02h</button>
+              <button class="schedule-preset" onclick="setCron('0 3 * * 0')">Hebdo (dim. 03h)</button>
+              <button class="schedule-preset" onclick="setCron('0 4 1 * *')">Mensuel (1er)</button>
+              <button class="schedule-preset" onclick="setCron('0 */6 * * *')">Toutes les 6h</button>
+              <button class="schedule-preset" onclick="setCron('0 * * * *')">Toutes les heures</button>
+            </div>
+            <input type="text" id="b-schedule" placeholder="0 2 * * *" />
+            <span style="font-family:var(--font-mono);font-size:.62rem;color:var(--text-muted);">min heure jour-mois mois jour-sem</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Docker -->
+      <div class="bkp-panel" id="bkp-docker-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-brands fa-docker"></i> Docker</span>
+          <button class="btn-sm" onclick="probeDockerContainers()"><i class="fa-solid fa-magnifying-glass" id="bkp-probe-ico"></i> Détecter</button>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>Containers à sauvegarder</label>
+            <div class="bkp-check-group">
+              <label class="bkp-check"><input type="checkbox" id="b-docker-all" checked /><i class="fa-solid fa-layer-group"></i> Tous (docker ps)</label>
+              <label class="bkp-check"><input type="checkbox" id="b-docker-stop" /><i class="fa-solid fa-pause"></i> Arrêter avant backup</label>
+            </div>
+          </div>
+          <div id="bkp-docker-list-wrap" style="display:none;">
+            <div class="bkp-field">
+              <label>Containers spécifiques</label>
+              <div class="bkp-path-list" id="bkp-docker-list"></div>
+              <button class="btn-add" style="margin-top:6px;" onclick="addPathItem('bkp-docker-list','container-name')">
+                <i class="fa-solid fa-plus"></i> Ajouter
+              </button>
+            </div>
+          </div>
+          <div id="bkp-docker-detected" style="display:none;">
+            <div class="bkp-field">
+              <label>Containers détectés sur le VPS</label>
+              <div id="bkp-docker-detected-list" style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-dim);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sites web -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-globe"></i> Sites web</span>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>Chemins à archiver</label>
+            <div class="bkp-path-list" id="bkp-web-list"></div>
+            <button class="btn-add" style="margin-top:6px;" onclick="addPathItem('bkp-web-list','/var/www/html')">
+              <i class="fa-solid fa-plus"></i> Ajouter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configurations -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-file-code"></i> Configurations</span>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>Chemins à archiver</label>
+            <div class="bkp-path-list" id="bkp-cfg-list"></div>
+            <button class="btn-add" style="margin-top:6px;" onclick="addPathItem('bkp-cfg-list','/etc/nginx')">
+              <i class="fa-solid fa-plus"></i> Ajouter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bases de données -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-database"></i> Bases de données</span>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>MySQL / MariaDB</label>
+            <div class="bkp-path-list" id="bkp-mysql-list"></div>
+            <button class="btn-add" style="margin-top:4px;" onclick="addDbEntry('mysql')">
+              <i class="fa-solid fa-plus"></i> Ajouter MySQL
+            </button>
+          </div>
+          <div class="bkp-field" style="margin-top:8px;">
+            <label>PostgreSQL</label>
+            <div class="bkp-path-list" id="bkp-pg-list"></div>
+            <button class="btn-add" style="margin-top:4px;" onclick="addDbEntry('postgres')">
+              <i class="fa-solid fa-plus"></i> Ajouter PostgreSQL
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hooks & Options avancées -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-terminal"></i> Hooks &amp; Options</span>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>Commande pré-backup (SSH)</label>
+            <input type="text" id="b-pre-hook" placeholder="ex: docker compose stop" />
+          </div>
+          <div class="bkp-field">
+            <label>Commande post-backup (SSH)</label>
+            <input type="text" id="b-post-hook" placeholder="ex: docker compose start" />
+          </div>
+          <div class="bkp-field">
+            <label>Patterns d'exclusion (tar --exclude)</label>
+            <div class="bkp-path-list" id="bkp-excl-list"></div>
+            <button class="btn-add" style="margin-top:4px;" onclick="addPathItem('bkp-excl-list','*.log')">
+              <i class="fa-solid fa-plus"></i> Ajouter
+            </button>
+          </div>
+          <div class="bkp-field">
+            <label>Options</label>
+            <div class="bkp-check-group">
+              <label class="bkp-check"><input type="checkbox" id="b-verify" /><i class="fa-solid fa-shield-check"></i> Vérifier les archives</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="bkp-panel">
+        <div class="bkp-panel-head">
+          <span class="bkp-panel-title"><i class="fa-solid fa-bell"></i> Notifications</span>
+        </div>
+        <div class="bkp-panel-body">
+          <div class="bkp-field">
+            <label>Webhook URL (POST JSON)</label>
+            <input type="text" id="b-webhook" placeholder="https://hooks.slack.com/... ou ntfy.sh/..." />
+            <span style="font-family:var(--font-mono);font-size:.62rem;color:var(--text-muted);">
+              Reçoit <code style="color:var(--accent);">{"event":"backup_success","host":"...","size":"..."}</code>
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /bkp-grid -->
+
+    <!-- Save settings -->
+    <div style="display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap;">
+      <button class="btn-primary" id="bkp-save-btn" onclick="saveBackupSettings()">
+        <i class="fa-solid fa-floppy-disk" id="bkp-save-ico"></i> Sauvegarder la configuration
+      </button>
+    </div>
+
+    <!-- Progress bar -->
+    <div id="bkp-progress-wrap" style="display:none;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);margin-bottom:6px;">
+        <span id="bkp-progress-label">En cours…</span>
+        <span id="bkp-progress-pct">0%</span>
+      </div>
+      <div class="progress-bar" style="height:6px;">
+        <div class="progress-fill" id="bkp-progress-fill" style="width:0%;transition:width .4s ease;"></div>
+      </div>
+    </div>
+
+    <!-- Backup log -->
+    <div class="sec-head"><div class="sec-label">// journal du dernier backup</div></div>
+    <div class="bkp-log-box" id="bkp-log-box">Aucun backup lancé.</div>
+
+    <!-- Backup history -->
+    <div class="sec-head">
+      <div class="sec-label">// historique des backups</div>
+      <button class="btn-sm" onclick="refreshBackupList()"><i class="fa-solid fa-rotate"></i> Actualiser</button>
+    </div>
+
+    <div class="bkp-chart-wrap" id="bkp-chart-wrap" style="display:none;">
+      <div class="bkp-chart-head">
+        <span class="bkp-chart-title"><i class="fa-solid fa-chart-line"></i> Évolution de la taille des backups</span>
+      </div>
+      <canvas id="bkp-chart" height="80"></canvas>
+    </div>
+
+    <div class="panel" style="margin-bottom:24px;">
+      <table>
+        <thead>
+          <tr>
+            <th>Identifiant</th>
+            <th style="width:90px;">Taille</th>
+            <th style="width:130px;">Date</th>
+            <th style="width:80px;">État</th>
+            <th style="width:80px;">Cibles</th>
+            <th style="width:110px;"></th>
+          </tr>
+        </thead>
+        <tbody id="bkp-history-tbody">
+          <tr><td colspan="6" class="tbl-empty">Chargement...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Restore section -->
+    <div class="sec-head"><div class="sec-label">// restauration</div></div>
+    <div class="bkp-panel" style="margin-bottom:40px;">
+      <div class="bkp-panel-head">
+        <span class="bkp-panel-title"><i class="fa-solid fa-clock-rotate-left"></i> Restaurer une archive sur le VPS distant</span>
+      </div>
+      <div class="bkp-panel-body">
+        <div class="bkp-row">
+          <div class="bkp-field">
+            <label>Backup à restaurer</label>
+            <select id="restore-bkp-id" onchange="loadRestoreContents()">
+              <option value="">— sélectionner —</option>
+            </select>
+          </div>
+          <div class="bkp-field">
+            <label>Archive dans le backup</label>
+            <select id="restore-arc">
+              <option value="">— sélectionner d'abord un backup —</option>
+            </select>
+          </div>
+        </div>
+        <div class="bkp-field">
+          <label>Destination sur le VPS (chemin absolu)</label>
+          <input type="text" id="restore-dest" placeholder="/tmp/restore" />
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:6px;">
+          <button class="btn-primary" id="restore-btn" onclick="runRestore()">
+            <i class="fa-solid fa-clock-rotate-left" id="restore-ico"></i> Restaurer
+          </button>
+          <span id="restore-result" style="font-family:var(--font-mono);font-size:.75rem;color:var(--text-muted);"></span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /bkp-remote-detail -->
+</div><!-- /tab-backup -->

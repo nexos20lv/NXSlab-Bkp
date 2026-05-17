@@ -1,0 +1,55 @@
+<!-- ═══════════════════ FICHIERS ═══════════════════ -->
+<div id="tab-files" class="tab-content">
+
+  <div class="sec-head"><div class="sec-label">// explorateur de fichiers</div></div>
+
+  <div class="explorer-bar">
+    <div class="breadcrumb" id="breadcrumb">
+      <span class="bc-root" onclick="navigateTo('/')">
+        <i class="fa-solid fa-hard-drive"></i> bkp-data
+      </span>
+    </div>
+    <div class="explorer-actions">
+      <button class="btn-sm" onclick="openModal('files-mkdir')">
+        <i class="fa-solid fa-folder-plus"></i> Nouveau dossier
+      </button>
+      <label class="btn-sm primary" style="cursor:pointer;">
+        <i class="fa-solid fa-upload"></i> Téléverser
+        <input type="file" id="file-input" multiple style="display:none;" onchange="uploadFiles(this.files)" />
+      </label>
+      <button class="btn-sm" onclick="navigateTo(explorerPath)" title="Actualiser">
+        <i class="fa-solid fa-rotate" id="explorer-refresh-ico"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <i class="fa-solid fa-cloud-arrow-up"></i>
+    <span>Glisser des fichiers ici ou cliquer pour téléverser dans le dossier actuel</span>
+  </div>
+
+  <div id="upload-prog" style="display:none;" class="upload-progress">
+    <i class="fa-solid fa-rotate spin"></i>
+    <span id="upload-prog-text">Téléversement...</span>
+    <div class="progress-bar">
+      <div class="progress-fill" id="upload-prog-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px;"></th>
+          <th>Nom</th>
+          <th style="width:90px;">Taille</th>
+          <th style="width:140px;">Modifié</th>
+          <th style="width:90px;"></th>
+        </tr>
+      </thead>
+      <tbody id="files-tbody">
+        <tr><td colspan="5" class="tbl-empty">Chargement...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

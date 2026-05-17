@@ -1,0 +1,49 @@
+<!-- ═══════════════════ PARAMÈTRES ═══════════════════ -->
+<div id="tab-settings" class="tab-content">
+
+  <div class="sec-head"><div class="sec-label">// changer le mot de passe</div></div>
+  <div class="settings-card">
+    <div class="modal-fields">
+      <div class="form-field">
+        <label>Mot de passe actuel</label>
+        <input type="password" id="pw-current" placeholder="••••••••" />
+      </div>
+      <div class="form-field">
+        <label>Nouveau mot de passe</label>
+        <input type="password" id="pw-new" placeholder="min. 8 caractères" />
+      </div>
+      <div class="form-field">
+        <label>Confirmer</label>
+        <input type="password" id="pw-confirm" placeholder="••••••••" />
+      </div>
+    </div>
+    <button class="btn-primary" id="pw-btn" onclick="changePassword()">
+      <i class="fa-solid fa-key" id="pw-ico"></i> Changer le mot de passe
+    </button>
+  </div>
+
+  <div class="sec-head" style="margin-top:36px;">
+    <div class="sec-label">// utilisateurs</div>
+    <button class="btn-add" onclick="openModal('user-add')"><i class="fa-solid fa-plus"></i> Ajouter</button>
+  </div>
+  <div class="settings-card" style="padding:0;overflow:hidden;">
+    <table class="users-table">
+      <thead><tr><th>Utilisateur</th><th>Rôle</th><th></th></tr></thead>
+      <tbody id="users-tbody"><tr><td colspan="3" class="tbl-empty">Chargement...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="sec-head" style="margin-top:36px;"><div class="sec-label">// informations</div></div>
+  <div class="settings-card">
+    <table style="font-size:.75rem;">
+      <tbody>
+        <tr><td style="color:var(--text-muted);width:160px;padding:8px 0;">Application</td><td class="mono" style="padding:8px 0;">NXSlab Backup WebUI</td></tr>
+        <tr><td style="color:var(--text-muted);padding:8px 0;">Version</td><td class="mono" style="padding:8px 0;">2.1.0</td></tr>
+        <tr><td style="color:var(--text-muted);padding:8px 0;">Auteur</td><td class="mono" style="padding:8px 0;">NeXoS_20</td></tr>
+        <tr><td style="color:var(--text-muted);padding:8px 0;">Backend</td><td class="mono" style="padding:8px 0;">Python · Flask</td></tr>
+        <tr><td style="color:var(--text-muted);padding:8px 0;">Répertoire données</td><td class="mono" style="padding:8px 0;" id="info-datadir">—</td></tr>
+        <tr><td style="color:var(--text-muted);padding:8px 0;">Health check</td><td class="mono" style="padding:8px 0;"><a href="/health" target="_blank" style="color:var(--accent);">/health</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

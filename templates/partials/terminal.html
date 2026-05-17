@@ -1,0 +1,25 @@
+<!-- ═══════════════════ TERMINAL ═══════════════════ -->
+<div id="tab-terminal" class="tab-content">
+  <div class="sec-head"><div class="sec-label">// terminal ssh distant</div></div>
+
+  <div class="term-bar">
+    <select id="term-remote-sel" style="background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--font-mono);font-size:.78rem;min-width:200px;">
+      <option value="">— sélectionner un VPS —</option>
+    </select>
+    <button class="btn-primary" id="term-connect-btn" onclick="termConnect()" style="padding:6px 16px;">
+      <i class="fa-solid fa-plug" id="term-connect-ico"></i> Connecter
+    </button>
+    <button class="btn-sm" id="term-disconnect-btn" onclick="termDisconnect()" style="display:none;">
+      <i class="fa-solid fa-xmark"></i> Déconnecter
+    </button>
+    <span id="term-status" style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-muted);"></span>
+  </div>
+
+  <div id="term-container"></div>
+
+  <p style="font-family:var(--font-mono);font-size:.65rem;color:var(--text-muted);margin-top:10px;">
+    <i class="fa-solid fa-circle-info" style="color:var(--accent);"></i>
+    Nécessite <code>flask-sock</code> installé (<code>pip install flask-sock</code>).
+    <span id="term-sock-warn" style="color:var(--warn);display:none;"> ⚠ WebSocket non disponible — flask-sock manquant.</span>
+  </p>
+</div>
