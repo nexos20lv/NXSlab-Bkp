@@ -106,5 +106,6 @@ def samba_user_passwd():
 def samba_user_delete():
     username = (request.json or {}).get('username', '').strip().lower()
     if not valid_username(username): return jsonify({'error': "Nom d'utilisateur invalide"}), 400
-    r = run(['smbpasswd', '-x', username])
-    return jsonify({'ok': r['ok']})
+    run(['smbpasswd', '-x', username])
+    run(['userdel', '-r', username])
+    return jsonify({'ok': True})

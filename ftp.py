@@ -45,7 +45,7 @@ def ftp_config():
 @ftp_bp.route('/api/ftp/users')
 @login_required
 def ftp_users():
-    r = shell(r"awk -F: '$3>=1000 && $1!=\"nobody\"{print $1\"|\"$3\"|\"$6\"|\"$7}' /etc/passwd")
+    r = shell("awk -F: '$3>=1000 && $1!=\"nobody\"{print $1\"|\"$3\"|\"$6\"|\"$7}' /etc/passwd")
     users = []
     for line in r['out'].splitlines():
         p = line.split('|')

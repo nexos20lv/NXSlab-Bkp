@@ -87,13 +87,18 @@ def api_system():
 @system_bp.route('/api/logs/<service>')
 @login_required
 def api_logs(service):
-    if service not in ('samba', 'ftp', 'system'):
+    allowed = ('samba', 'ftp', 'nxslab', 'system', 'auth', 'kernel', 'docker')
+    if service not in allowed:
         return jsonify({'error': 'Service inconnu'}), 400
     lines = min(int(request.args.get('lines', 100)), 500)
     cmds = {
         'samba':  f'journalctl -u smbd -n {lines} --no-pager --output=short-iso 2>/dev/null || tail -n {lines} /var/log/samba/log.smbd 2>/dev/null',
         'ftp':    f'journalctl -u vsftpd -n {lines} --no-pager --output=short-iso 2>/dev/null || tail -n {lines} /var/log/vsftpd.log 2>/dev/null',
+        'nxslab': f'journalctl -u nxslab-bkp -n {lines} --no-pager --output=short-iso 2>/dev/null',
         'system': f'journalctl -n {lines} --no-pager --output=short-iso 2>/dev/null',
+        'auth':   f'journalctl _COMM=sshd _COMM=sudo _COMM=su -n {lines} --no-pager --output=short-iso 2>/dev/null || tail -n {lines} /var/log/auth.log 2>/dev/null',
+        'kernel': f'journalctl -k -n {lines} --no-pager --output=short-iso 2>/dev/null || dmesg -T 2>/dev/null | tail -n {lines}',
+        'docker': f'journalctl -u docker -n {lines} --no-pager --output=short-iso 2>/dev/null || tail -n {lines} /var/log/docker.log 2>/dev/null',
     }
     r = shell(cmds[service])
     return jsonify({'logs': r['out'] or '(aucun journal disponible)', 'err': r['err'] if not r['ok'] else ''})

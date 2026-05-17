@@ -5,9 +5,13 @@
 
   <div class="log-controls">
     <div class="btn-group" id="log-svc-group">
-      <button class="btn-sm active" onclick="setLogSvc('samba',this)"><i class="fa-solid fa-folder-open"></i> Samba</button>
-      <button class="btn-sm"        onclick="setLogSvc('ftp',this)">  <i class="fa-solid fa-network-wired"></i> FTP</button>
-      <button class="btn-sm"        onclick="setLogSvc('system',this)"><i class="fa-solid fa-server"></i> Système</button>
+      <button class="btn-sm active" onclick="setLogSvc('samba',this)">  <i class="fa-solid fa-folder-open"></i> Samba</button>
+      <button class="btn-sm"        onclick="setLogSvc('ftp',this)">    <i class="fa-solid fa-network-wired"></i> FTP</button>
+      <button class="btn-sm"        onclick="setLogSvc('nxslab',this)"> <i class="fa-solid fa-database"></i> NXSlab</button>
+      <button class="btn-sm"        onclick="setLogSvc('auth',this)">   <i class="fa-solid fa-shield-halved"></i> Auth/SSH</button>
+      <button class="btn-sm"        onclick="setLogSvc('kernel',this)"> <i class="fa-solid fa-microchip"></i> Kernel</button>
+      <button class="btn-sm"        onclick="setLogSvc('docker',this)"> <i class="fa-brands fa-docker"></i> Docker</button>
+      <button class="btn-sm"        onclick="setLogSvc('system',this)"> <i class="fa-solid fa-server"></i> Système</button>
     </div>
     <select class="ctrl-select" id="log-lines">
       <option value="50">50 lignes</option>

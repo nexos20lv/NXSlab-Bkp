@@ -25,19 +25,27 @@ function escHtml(s) {
 }
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────
+let _tabPoller = null;
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (_tabPoller) { clearInterval(_tabPoller); _tabPoller = null; }
     const t = btn.dataset.tab;
-    if (t === 'samba')    { refreshSambaShares(); refreshSambaUsers(); refreshSambaConns(); }
-    if (t === 'ftp')      { refreshFtpUsers(); refreshFtpConns(); }
+    if (t === 'samba') {
+      const fn = () => { refreshSambaShares(); refreshSambaUsers(); refreshSambaConns(); };
+      fn(); _tabPoller = setInterval(fn, 15000);
+    }
+    if (t === 'ftp') {
+      const fn = () => { refreshFtpUsers(); refreshFtpConns(); };
+      fn(); _tabPoller = setInterval(fn, 15000);
+    }
     if (t === 'files')    { navigateTo(explorerPath); }
     if (t === 'logs')     { fetchLogs(); }
-    if (t === 'backup')   { refreshRemoteCards(); }
-    if (t === 'settings') { refreshUsers(); }
+    if (t === 'backup')   { refreshRemoteCards(); _tabPoller = setInterval(refreshRemoteCards, 30000); }
+    if (t === 'settings') { refreshUsers(); refreshSettingsInfo(); _tabPoller = setInterval(refreshSettingsInfo, 30000); }
     if (t === 'terminal') { initTerminalTab(); }
   });
 });
@@ -517,7 +525,7 @@ function openModal(type, arg) {
     },
     'samba-user-del': {
       title: `Supprimer ${arg}`,
-      sub: `Supprimer l'utilisateur Samba "${arg}" ?`,
+      sub: `Supprimer l'utilisateur Samba "${arg}" — supprime aussi le compte système et son répertoire home ?`,
       fields: '', confirm: 'Supprimer', danger: true,
       action: async () => { await api('/api/samba/users/delete',{method:'POST',body:{username:arg}}); refreshSambaUsers(); toast('Supprimé','ok'); }
     },
@@ -537,7 +545,7 @@ function openModal(type, arg) {
     },
     'ftp-user-del': {
       title: `Supprimer ${arg}`,
-      sub: `Supprimer l'utilisateur "${arg}" et son home ?`,
+      sub: `Supprimer l'utilisateur "${arg}" — supprime aussi le compte système, le répertoire home et les données ?`,
       fields: '', confirm: 'Supprimer', danger: true,
       action: async () => { await api('/api/ftp/users/delete',{method:'POST',body:{username:arg}}); refreshFtpUsers(); toast('Supprimé','ok'); }
     },
@@ -568,7 +576,7 @@ function openModal(type, arg) {
       sub: 'Le remote sera créé avec une configuration par défaut, modifiable ensuite.',
       fields: fld("Nom affiché","m-rname","Mon VPS") + fld("Hôte / IP","m-rhost","1.2.3.4 ou vps.domain.tld") +
               `<div style="display:flex;gap:8px;">${fld("Port SSH","m-rport","22")}${fld("Utilisateur","m-ruser","root")}</div>` +
-              `<div class="form-field"><label>Authentification</label><select id="m-rauth" onchange="toggleModalAuth()" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;"><option value="key">Clé SSH</option><option value="password">Mot de passe</option></select></div>` +
+              `<div class="form-field"><label>Authentification</label><select id="m-rauth" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;"><option value="key">Clé SSH</option><option value="password">Mot de passe</option></select></div>` +
               `<div id="m-key-wrap">${fld("Chemin clé privée","m-rkeypath","/root/.ssh/id_rsa")}</div>` +
               `<div id="m-pw-wrap" style="display:none;">${fld("Mot de passe SSH","m-rpassword","••••••••","password")}</div>`,
       confirm: 'Ajouter',
@@ -590,7 +598,7 @@ function openModal(type, arg) {
       fields: fld("Nom affiché","m-rname", _editRemoteData.name||'') +
               fld("Hôte / IP","m-rhost", _editRemoteData.host||'') +
               `<div style="display:flex;gap:8px;">${fld("Port SSH","m-rport", String(_editRemoteData.port||22))}${fld("Utilisateur","m-ruser", _editRemoteData.user||'root')}</div>` +
-              `<div class="form-field"><label>Authentification</label><select id="m-rauth" onchange="toggleModalAuth()" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;"><option value="key"${(_editRemoteData.auth_type||'key')==='key'?' selected':''}>Clé SSH</option><option value="password"${_editRemoteData.auth_type==='password'?' selected':''}>Mot de passe</option></select></div>` +
+              `<div class="form-field"><label>Authentification</label><select id="m-rauth" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;"><option value="key"${(_editRemoteData.auth_type||'key')==='key'?' selected':''}>Clé SSH</option><option value="password"${_editRemoteData.auth_type==='password'?' selected':''}>Mot de passe</option></select></div>` +
               `<div id="m-key-wrap"${_editRemoteData.auth_type==='password'?' style="display:none;"':''}>${fld("Chemin clé privée","m-rkeypath", _editRemoteData.key_path||'/root/.ssh/id_rsa')}</div>` +
               `<div id="m-pw-wrap"${(_editRemoteData.auth_type||'key')!=='password'?' style="display:none;"':''}>${fld("Mot de passe SSH","m-rpassword","laisser vide pour garder l'actuel","password")}</div>`,
       confirm: 'Sauvegarder',
@@ -641,6 +649,8 @@ function openModal(type, arg) {
   title.textContent   = cfg.title;
   sub.textContent     = cfg.sub;
   fields.innerHTML    = cfg.fields;
+  const _authSel = document.getElementById('m-rauth');
+  if (_authSel) { _authSel.addEventListener('change', toggleModalAuth); toggleModalAuth(); }
   confirm.textContent = cfg.confirm;
   confirm.className   = 'btn-confirm' + (cfg.danger ? ' danger' : '');
   _modalAction = cfg.action;
@@ -667,11 +677,37 @@ function closeModal(e) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
 function toggleModalAuth() {
-  const auth   = document.getElementById('m-rauth')?.value;
+  const auth    = document.getElementById('m-rauth')?.value;
   const keyWrap = document.getElementById('m-key-wrap');
   const pwWrap  = document.getElementById('m-pw-wrap');
   if (keyWrap) keyWrap.style.display = auth === 'key'      ? '' : 'none';
   if (pwWrap)  pwWrap.style.display  = auth === 'password' ? '' : 'none';
+}
+
+async function refreshSettingsInfo() {
+  try {
+    const [h, s] = await Promise.all([api('/health'), api('/api/status')]);
+    const set     = (id, v)    => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    const setHtml = (id, html) => { const e = document.getElementById(id); if (e) e.innerHTML = html; };
+    const capHtml = ok => ok
+      ? `<span style="color:var(--up);font-family:var(--font-mono);font-size:.78rem;"><i class="fa-solid fa-circle-check"></i> Disponible</span>`
+      : `<span style="color:var(--down);font-family:var(--font-mono);font-size:.78rem;"><i class="fa-solid fa-circle-xmark"></i> Non installé</span>`;
+    const svcHtml = st => st === 'up'
+      ? `<span style="color:var(--up);font-family:var(--font-mono);font-size:.78rem;"><i class="fa-solid fa-circle-check"></i> actif</span>`
+      : `<span style="color:var(--down);font-family:var(--font-mono);font-size:.78rem;"><i class="fa-solid fa-circle-xmark"></i> arrêté</span>`;
+    const sec = h.uptime_seconds || 0;
+    const hrs = Math.floor(sec / 3600), min = Math.floor((sec % 3600) / 60);
+    set('info-version',  h.version || '—');
+    set('info-uptime',   hrs > 0 ? `${hrs}h ${min}m` : `${min}m`);
+    set('info-datadir',  s.data_dir || '—');
+    set('info-hostname', s.hostname || '—');
+    if (_me.username) { set('info-me-user', _me.username); set('info-me-role', _me.role || '—'); }
+    setHtml('cap-paramiko',  capHtml(h.has_paramiko));
+    setHtml('cap-scheduler', capHtml(h.has_scheduler));
+    setHtml('cap-websocket', capHtml(h.has_websocket));
+    setHtml('cap-samba', svcHtml(s.samba));
+    setHtml('cap-ftp',   svcHtml(s.ftp));
+  } catch { /* silent */ }
 }
 
 // ─── Backup summary (dashboard) ──────────────────────────────────────────
@@ -1287,20 +1323,24 @@ function termDisconnect() {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────
+let _me = {};
+
 (async () => {
   await refreshStatus();
   await refreshSystem();
   try {
-    const me = await api('/api/settings/me');
-    if (me.username) {
+    _me = await api('/api/settings/me');
+    if (_me.username) {
       const badge = document.getElementById('nav-user-badge');
       const uEl   = document.getElementById('nav-username');
       if (badge) badge.style.display = '';
-      if (uEl)   uEl.textContent = me.username;
+      if (uEl)   uEl.textContent = _me.username;
     }
     refreshUsers();
   } catch { /* silent */ }
   refreshBackupSummary();
   refreshAllRemoteStats();
+  setInterval(refreshStatus,  10000);
+  setInterval(refreshSystem,  30000);
   setInterval(() => { refreshBackupSummary(); refreshAllRemoteStats(); }, 60000);
 })();
