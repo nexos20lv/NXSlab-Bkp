@@ -650,7 +650,17 @@ function openModal(type, arg) {
   sub.textContent     = cfg.sub;
   fields.innerHTML    = cfg.fields;
   const _authSel = document.getElementById('m-rauth');
-  if (_authSel) { _authSel.addEventListener('change', toggleModalAuth); toggleModalAuth(); }
+  if (_authSel) {
+    const _toggle = () => {
+      const v  = _authSel.value;
+      const kw = document.getElementById('m-key-wrap');
+      const pw = document.getElementById('m-pw-wrap');
+      if (kw) kw.style.display = (v === 'key')      ? '' : 'none';
+      if (pw) pw.style.display = (v === 'password') ? '' : 'none';
+    };
+    _authSel.addEventListener('change', _toggle);
+    _toggle();
+  }
   confirm.textContent = cfg.confirm;
   confirm.className   = 'btn-confirm' + (cfg.danger ? ' danger' : '');
   _modalAction = cfg.action;

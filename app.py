@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """NXSlab Backup WebUI — point d'entrée"""
 import os
+import time
 import secrets
 from flask import Flask
 
@@ -11,6 +12,12 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024 * 1024
 
 cfg = load_config()
 app.secret_key = cfg.get('secret_key', secrets.token_hex(32))
+
+_STATIC_VER = str(int(time.time()))
+
+@app.context_processor
+def _inject_static_ver():
+    return dict(sv=_STATIC_VER)
 
 # ─── WebSocket (optionnel) ────────────────────────────────────────────────────
 
