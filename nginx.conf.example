@@ -1,0 +1,45 @@
+# NXSlab Backup WebUI — nginx reverse proxy
+# Copier dans /etc/nginx/sites-available/nxslab-bkp
+# puis : ln -s /etc/nginx/sites-available/nxslab-bkp /etc/nginx/sites-enabled/
+# et    : nginx -t && systemctl reload nginx
+
+server {
+    listen 80;
+    server_name bkp.example.com;  # <- remplacer par votre domaine
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name bkp.example.com;  # <- remplacer par votre domaine
+
+    # Certificats SSL (certbot, etc.)
+    # ssl_certificate     /etc/letsencrypt/live/bkp.example.com/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/bkp.example.com/privkey.pem;
+
+    # ── WebSocket terminal SSH ─────────────────────────────────────────────
+    location /ws/ {
+        proxy_pass         http://127.0.0.1:5080;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade    $http_upgrade;
+        proxy_set_header   Connection "upgrade";
+        proxy_set_header   Host       $host;
+        proxy_set_header   X-Real-IP  $remote_addr;
+        proxy_read_timeout 86400s;
+        proxy_send_timeout 86400s;
+        proxy_buffering    off;
+    }
+
+    # ── Application Flask ──────────────────────────────────────────────────
+    location / {
+        proxy_pass         http://127.0.0.1:5080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host            $host;
+        proxy_set_header   X-Real-IP       $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+        proxy_send_timeout 120s;
+        client_max_body_size 0;
+    }
+}
