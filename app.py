@@ -68,6 +68,11 @@ def _migrate_config(c):
     elif 'users' not in c:
         c['users'] = [{'username': 'admin', 'password_hash': hashlib.sha256(b'admin').hexdigest(), 'role': 'admin'}]
         changed = True
+    # Ensure every user has a role (pre-multi-user accounts were all admins)
+    for u in c.get('users', []):
+        if 'role' not in u:
+            u['role'] = 'admin'
+            changed = True
     # Single remote → remotes array
     if 'remote' in c and 'remotes' not in c:
         remote = c.pop('remote', {})
@@ -245,6 +250,7 @@ def api_status():
         'ftp_conns': ftp_conns['out'].strip(),
         'ts':        datetime.now().strftime('%H:%M:%S'),
         'role':      session.get('role', 'readonly'),
+        'data_dir':  get_data_dir(),
     })
 
 # ─── Remotes CRUD ────────────────────────────────────────────────────────────
@@ -262,6 +268,11 @@ def remotes_list():
         entry['last_run']    = state.get('last_run')
         entry['last_status'] = state.get('last_status')
         entry['running']     = state.get('running', False)
+        bkp = r.get('backup', {})
+        enabled = bool(bkp.get('schedule_enabled'))
+        entry['schedule_enabled'] = enabled
+        entry['schedule']         = bkp.get('schedule', '')
+        entry['next_run']         = _next_cron_run(bkp.get('schedule', '')) if enabled else None
         result.append(entry)
     return jsonify({'remotes': result})
 
@@ -998,6 +1009,23 @@ def _notify(url: str, payload: dict):
         urllib.request.urlopen(req, timeout=10)
     except Exception:
         pass
+
+def _next_cron_run(schedule: str):
+    if not HAS_SCHEDULER or not schedule:
+        return None
+    try:
+        from datetime import timezone
+        parts = schedule.strip().split()
+        if len(parts) != 5:
+            return None
+        trigger = CronTrigger(
+            minute=parts[0], hour=parts[1],
+            day=parts[2], month=parts[3], day_of_week=parts[4]
+        )
+        nxt = trigger.get_next_fire_time(None, datetime.now(tz=timezone.utc))
+        return nxt.astimezone().strftime('%Y-%m-%d %H:%M') if nxt else None
+    except Exception:
+        return None
 
 # ─── Backup — state & scheduler ──────────────────────────────────────────────
 

@@ -1162,6 +1162,31 @@
     .role-badge.admin    { background: rgba(0,200,255,0.10); color: var(--accent); border: 1px solid rgba(0,200,255,0.25); }
     .role-badge.readonly { background: rgba(255,255,255,0.04); color: var(--text-muted); border: 1px solid var(--border); }
 
+    /* ── Backup summary (dashboard) ── */
+    .bkp-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .bkp-sum-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+      display: flex; flex-direction: column; gap: 7px;
+    }
+    .bkp-sum-card:hover { border-color: var(--border-h); box-shadow: 0 0 16px rgba(0,200,255,.07); }
+    .bkp-sum-top { display: flex; align-items: center; gap: 8px; }
+    .bkp-sum-name { font-family: var(--font-mono); font-size: .82rem; font-weight: 600; flex: 1; }
+    .bkp-sum-row { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: .68rem; }
+    .bkp-sum-row span:first-child { color: var(--text-muted); }
+    .bkp-sum-row span:last-child { color: var(--text); }
+    .bkp-sum-next { font-family: var(--font-mono); font-size: .63rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px; }
+    .bkp-sum-next i { color: var(--accent); }
+
     /* ── Role-based visibility ── */
     .role-hidden { display: none !important; }
   </style>
@@ -1178,6 +1203,11 @@
           <span id="nav-hostname">...</span>
           <span class="nav-dot" id="nav-dot"></span>
         </span>
+        <span class="nav-host" id="nav-user-badge" style="display:none;">
+          <i class="fa-solid fa-user"></i>
+          <span id="nav-username">—</span>
+          <span id="nav-role-badge" style="font-size:.60rem;opacity:.7;"></span>
+        </span>
         <a href="/logout" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a>
       </div>
     </nav>
@@ -1185,13 +1215,13 @@
     <!-- Tabs -->
     <div class="tabs">
       <button class="tab-btn active" data-tab="dashboard"><i class="fa-solid fa-gauge-high"></i> Dashboard</button>
+      <button class="tab-btn" data-tab="backup"><i class="fa-solid fa-database"></i> Backup</button>
       <button class="tab-btn" data-tab="samba"><i class="fa-solid fa-folder-open"></i> Samba</button>
       <button class="tab-btn" data-tab="ftp"><i class="fa-solid fa-network-wired"></i> FTP</button>
       <button class="tab-btn" data-tab="files"><i class="fa-solid fa-hard-drive"></i> Fichiers</button>
-      <button class="tab-btn" data-tab="logs"><i class="fa-solid fa-terminal"></i> Logs</button>
-      <button class="tab-btn" data-tab="settings"><i class="fa-solid fa-gear"></i> Paramètres</button>
-      <button class="tab-btn" data-tab="backup"><i class="fa-solid fa-database"></i> Backup</button>
       <button class="tab-btn" data-tab="terminal"><i class="fa-solid fa-terminal"></i> Terminal</button>
+      <button class="tab-btn" data-tab="logs"><i class="fa-solid fa-file-lines"></i> Logs</button>
+      <button class="tab-btn" data-tab="settings"><i class="fa-solid fa-gear"></i> Paramètres</button>
     </div>
 
     <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
@@ -1263,6 +1293,17 @@
         </div>
       </div>
 
+      <!-- Backup VPS summary -->
+      <div id="bkp-summary-section" style="display:none;">
+        <div class="sec-head">
+          <div class="sec-label">// état des backups vps</div>
+          <button class="btn-sm" onclick="document.querySelector('[data-tab=backup]').click()">
+            <i class="fa-solid fa-arrow-right"></i> Gérer
+          </button>
+        </div>
+        <div class="bkp-summary-grid" id="bkp-summary-grid"></div>
+      </div>
+
       <!-- Remote VPS stats -->
       <div id="remote-stats-section" style="display:none;">
         <div class="sec-head">
@@ -1284,10 +1325,10 @@
             <span class="svc-dot"></span><span class="svc-lbl">smbd</span>
           </span>
         </span>
-        <button class="btn-ctrl start"   onclick="svcCtrl('samba','start')">  <i class="fa-solid fa-play"></i> Démarrer</button>
-        <button class="btn-ctrl stop"    onclick="svcCtrl('samba','stop')">   <i class="fa-solid fa-stop"></i> Arrêter</button>
-        <button class="btn-ctrl restart" onclick="svcCtrl('samba','restart')"><i class="fa-solid fa-rotate"></i> Redémarrer</button>
-        <button class="btn-ctrl"         onclick="svcCtrl('samba','reload')"> <i class="fa-solid fa-arrows-rotate"></i> Recharger</button>
+        <button class="btn-ctrl start"   data-role-hide="readonly" onclick="svcCtrl('samba','start')">  <i class="fa-solid fa-play"></i> Démarrer</button>
+        <button class="btn-ctrl stop"    data-role-hide="readonly" onclick="svcCtrl('samba','stop')">   <i class="fa-solid fa-stop"></i> Arrêter</button>
+        <button class="btn-ctrl restart" data-role-hide="readonly" onclick="svcCtrl('samba','restart')"><i class="fa-solid fa-rotate"></i> Redémarrer</button>
+        <button class="btn-ctrl"         data-role-hide="readonly" onclick="svcCtrl('samba','reload')"> <i class="fa-solid fa-arrows-rotate"></i> Recharger</button>
       </div>
 
       <div class="two-col">
@@ -1352,9 +1393,9 @@
             <span id="ftp-conn-count">—</span> connexion(s) active(s)
           </span>
         </span>
-        <button class="btn-ctrl start"   onclick="svcCtrl('ftp','start')">  <i class="fa-solid fa-play"></i> Démarrer</button>
-        <button class="btn-ctrl stop"    onclick="svcCtrl('ftp','stop')">   <i class="fa-solid fa-stop"></i> Arrêter</button>
-        <button class="btn-ctrl restart" onclick="svcCtrl('ftp','restart')"><i class="fa-solid fa-rotate"></i> Redémarrer</button>
+        <button class="btn-ctrl start"   data-role-hide="readonly" onclick="svcCtrl('ftp','start')">  <i class="fa-solid fa-play"></i> Démarrer</button>
+        <button class="btn-ctrl stop"    data-role-hide="readonly" onclick="svcCtrl('ftp','stop')">   <i class="fa-solid fa-stop"></i> Arrêter</button>
+        <button class="btn-ctrl restart" data-role-hide="readonly" onclick="svcCtrl('ftp','restart')"><i class="fa-solid fa-rotate"></i> Redémarrer</button>
       </div>
 
       <div class="two-col">
@@ -1544,13 +1585,11 @@
       <!-- Remote selector row -->
       <div class="sec-head">
         <div class="sec-label">// vps distants</div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;margin-bottom:24px;">
-        <div class="remote-cards" id="remote-cards" style="flex:1;min-width:0;margin:0;"></div>
-        <div class="remote-add-card" data-role-hide="readonly" onclick="openModal('remote-add')">
+        <button class="btn-add" data-role-hide="readonly" onclick="openModal('remote-add')">
           <i class="fa-solid fa-plus"></i> Ajouter un VPS
-        </div>
+        </button>
       </div>
+      <div class="remote-cards" id="remote-cards" style="margin-bottom:20px;"></div>
 
       <!-- No remote placeholder -->
       <div id="bkp-no-remote" style="text-align:center;padding:48px 0;font-family:var(--font-mono);font-size:.80rem;color:var(--text-muted);">
@@ -2055,6 +2094,8 @@
       setSvcBadge('ctrl-badge-samba', d.samba);
       setSvcBadge('badge-ftp',        d.ftp);
       setSvcBadge('ctrl-badge-ftp',   d.ftp);
+      const ddEl = document.getElementById('info-datadir');
+      if (ddEl && d.data_dir) ddEl.textContent = d.data_dir;
     } catch(e) { toast('Erreur statut: ' + e.message, 'err'); }
     document.getElementById('hero-refresh-ico').classList.remove('spin');
   }
@@ -2292,9 +2333,6 @@
       explorerPath = d.path;
       renderBreadcrumb(d.path);
       renderFiles(d.entries, d.parent);
-      // Show data_dir in settings
-      const infoEl = document.getElementById('info-datadir');
-      if (infoEl && path === '/') infoEl.textContent = '...';
     } catch(e) {
       tbody.innerHTML = `<tr><td colspan="5" class="tbl-empty" style="color:var(--down)">Erreur: ${escHtml(e.message)}</td></tr>`;
     }
@@ -2654,6 +2692,37 @@
     });
   }
 
+  // ─── Backup summary (dashboard) ──────────────────────────────────────────
+  async function refreshBackupSummary() {
+    try {
+      const data    = await api('/api/remotes');
+      const remotes = data.remotes || [];
+      const section = document.getElementById('bkp-summary-section');
+      const grid    = document.getElementById('bkp-summary-grid');
+      if (!remotes.length) { section.style.display = 'none'; return; }
+      section.style.display = '';
+      grid.innerHTML = remotes.map(r => {
+        const stColor  = r.last_status === 'ok' ? 'var(--up)' : r.last_status === 'error' ? 'var(--down)' : 'var(--text-muted)';
+        const stLabel  = r.last_status === 'ok' ? 'OK' : r.last_status === 'error' ? 'Erreur' : r.running ? 'En cours…' : 'Jamais';
+        const lastRun  = r.last_run ? r.last_run.replace('T',' ').slice(0,16) : '—';
+        const nextLine = r.schedule_enabled && r.next_run
+          ? `<div class="bkp-sum-next"><i class="fa-regular fa-clock"></i> Prochain: ${escHtml(r.next_run)}</div>`
+          : `<div class="bkp-sum-next"><i class="fa-regular fa-clock"></i> Planification désactivée</div>`;
+        return `<div class="bkp-sum-card" onclick="document.querySelector('[data-tab=backup]').click();setTimeout(()=>selectRemote('${r.id}'),120);">
+          <div class="bkp-sum-top">
+            <span style="width:8px;height:8px;border-radius:50%;background:${stColor};flex-shrink:0;${r.last_status?`box-shadow:0 0 5px ${stColor}`:''}"></span>
+            <span class="bkp-sum-name">${escHtml(r.name)}</span>
+            ${r.running ? '<span style="font-family:var(--font-mono);font-size:.58rem;color:var(--accent);">● actif</span>' : ''}
+          </div>
+          <div class="bkp-sum-row"><span>Hôte</span><span>${escHtml(r.host)}</span></div>
+          <div class="bkp-sum-row"><span>Dernier backup</span><span>${escHtml(lastRun)}</span></div>
+          <div class="bkp-sum-row"><span>État</span><span style="color:${stColor}">${stLabel}</span></div>
+          ${nextLine}
+        </div>`;
+      }).join('');
+    } catch { /* silent */ }
+  }
+
   // ─── Remote stats (dashboard) ─────────────────────────────────────────────
   async function refreshAllRemoteStats() {
     try {
@@ -2708,9 +2777,12 @@
       const noRemote  = document.getElementById('bkp-no-remote');
 
       container.innerHTML = remotes.map(r => {
-        const status = r.last_status === 'ok' ? 'var(--up)' : r.last_status === 'error' ? 'var(--down)' : 'var(--text-muted)';
+        const status  = r.last_status === 'ok' ? 'var(--up)' : r.last_status === 'error' ? 'var(--down)' : 'var(--text-muted)';
         const lastRun = r.last_run ? r.last_run.replace('T',' ').slice(0,16) : 'jamais';
         const isActive = r.id === _selectedRemoteId;
+        const nextLine = r.schedule_enabled && r.next_run
+          ? `<span class="remote-card-meta" style="color:var(--accent);opacity:.8;"><i class="fa-regular fa-clock" style="font-size:.58rem;"></i> ${escHtml(r.next_run)}</span>`
+          : '';
         return `<div class="remote-card${isActive?' active':''}" id="rc-${r.id}" onclick="selectRemote('${r.id}')">
           <div class="remote-card-top">
             <span class="remote-card-name">${escHtml(r.name)}</span>
@@ -2719,6 +2791,7 @@
           </div>
           <span class="remote-card-host"><i class="fa-solid fa-server" style="font-size:.60rem;"></i> ${escHtml(r.host)}</span>
           <span class="remote-card-meta">Dernier backup: ${escHtml(lastRun)}</span>
+          ${nextLine}
           <div class="remote-card-actions" onclick="event.stopPropagation()">
             <button class="remote-card-btn" onclick="openEditRemote('${r.id}')"><i class="fa-solid fa-pen"></i> Éditer</button>
             <button class="remote-card-btn danger" onclick="deleteRemote('${r.id}','${escHtml(r.name)}')"><i class="fa-solid fa-trash"></i></button>
@@ -3246,11 +3319,20 @@
     try {
       const me = await api('/api/settings/me');
       applyRole(me.role || 'readonly');
+      if (me.username) {
+        const badge = document.getElementById('nav-user-badge');
+        const uEl   = document.getElementById('nav-username');
+        const rEl   = document.getElementById('nav-role-badge');
+        if (badge) badge.style.display = '';
+        if (uEl)   uEl.textContent  = me.username;
+        if (rEl)   rEl.textContent  = me.role === 'admin' ? '(admin)' : '(ro)';
+      }
       if (me.role === 'admin') refreshUsers();
     } catch { applyRole('readonly'); }
-    // Kick remote stats if any remotes exist
+    // Kick remote stats & backup summary if remotes exist
+    refreshBackupSummary();
     refreshAllRemoteStats();
-    setInterval(refreshAllRemoteStats, 60000);
+    setInterval(() => { refreshBackupSummary(); refreshAllRemoteStats(); }, 60000);
   })();
   </script>
 </body>
