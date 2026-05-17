@@ -25,7 +25,14 @@ def admin_required(f):
     def wrapper(*args, **kwargs):
         if not session.get('logged_in'):
             return jsonify({'error': 'Non autorisé'}), 401
-        if session.get('role') != 'admin':
+        role = session.get('role')
+        if role is None:
+            c        = load_config()
+            username = session.get('user', '')
+            u        = next((u for u in c.get('users', []) if u.get('username') == username), None)
+            role     = u.get('role', 'admin') if u else 'admin'
+            session['role'] = role
+        if role != 'admin':
             return jsonify({'error': 'Droits administrateur requis'}), 403
         return f(*args, **kwargs)
     return wrapper

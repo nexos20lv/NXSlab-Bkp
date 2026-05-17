@@ -568,15 +568,18 @@ function openModal(type, arg) {
       sub: 'Le remote sera créé avec une configuration par défaut, modifiable ensuite.',
       fields: fld("Nom affiché","m-rname","Mon VPS") + fld("Hôte / IP","m-rhost","1.2.3.4 ou vps.domain.tld") +
               `<div style="display:flex;gap:8px;">${fld("Port SSH","m-rport","22")}${fld("Utilisateur","m-ruser","root")}</div>` +
-              `<div class="form-field"><label>Authentification</label><select id="m-rauth" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;"><option value="key">Clé SSH</option><option value="password">Mot de passe</option></select></div>` +
-              fld("Chemin clé privée","m-rkeypath","/root/.ssh/id_rsa"),
+              `<div class="form-field"><label>Authentification</label><select id="m-rauth" onchange="toggleModalAuth()" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;"><option value="key">Clé SSH</option><option value="password">Mot de passe</option></select></div>` +
+              `<div id="m-key-wrap">${fld("Chemin clé privée","m-rkeypath","/root/.ssh/id_rsa")}</div>` +
+              `<div id="m-pw-wrap" style="display:none;">${fld("Mot de passe SSH","m-rpassword","••••••••","password")}</div>`,
       confirm: 'Ajouter',
       action: async () => {
+        const authType = document.getElementById('m-rauth')?.value || 'key';
         await api('/api/remotes/add', {method:'POST', body:{
           name: v('m-rname'), host: v('m-rhost'),
           port: parseInt(v('m-rport'))||22, user: v('m-ruser')||'root',
-          auth_type: document.getElementById('m-rauth')?.value||'key',
-          key_path: v('m-rkeypath')||'/root/.ssh/id_rsa',
+          auth_type: authType,
+          key_path:  authType === 'key'      ? (v('m-rkeypath')||'/root/.ssh/id_rsa') : '',
+          password:  authType === 'password' ? v('m-rpassword') : '',
         }});
         toast('VPS ajouté', 'ok'); refreshRemoteCards();
       }
@@ -587,14 +590,19 @@ function openModal(type, arg) {
       fields: fld("Nom affiché","m-rname", _editRemoteData.name||'') +
               fld("Hôte / IP","m-rhost", _editRemoteData.host||'') +
               `<div style="display:flex;gap:8px;">${fld("Port SSH","m-rport", String(_editRemoteData.port||22))}${fld("Utilisateur","m-ruser", _editRemoteData.user||'root')}</div>` +
-              fld("Chemin clé privée","m-rkeypath", _editRemoteData.key_path||'/root/.ssh/id_rsa'),
+              `<div class="form-field"><label>Authentification</label><select id="m-rauth" onchange="toggleModalAuth()" style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;"><option value="key"${(_editRemoteData.auth_type||'key')==='key'?' selected':''}>Clé SSH</option><option value="password"${_editRemoteData.auth_type==='password'?' selected':''}>Mot de passe</option></select></div>` +
+              `<div id="m-key-wrap"${_editRemoteData.auth_type==='password'?' style="display:none;"':''}>${fld("Chemin clé privée","m-rkeypath", _editRemoteData.key_path||'/root/.ssh/id_rsa')}</div>` +
+              `<div id="m-pw-wrap"${(_editRemoteData.auth_type||'key')!=='password'?' style="display:none;"':''}>${fld("Mot de passe SSH","m-rpassword","laisser vide pour garder l'actuel","password")}</div>`,
       confirm: 'Sauvegarder',
       action: async () => {
-        const rid = _editRemoteData.id || arg;
+        const rid      = _editRemoteData.id || arg;
+        const authType = document.getElementById('m-rauth')?.value || 'key';
         await api('/api/remotes/update', {method:'POST', body:{
           id: rid, name: v('m-rname'), host: v('m-rhost'),
           port: parseInt(v('m-rport'))||22, user: v('m-ruser')||'root',
-          key_path: v('m-rkeypath'),
+          auth_type: authType,
+          key_path:  authType === 'key'      ? v('m-rkeypath') : '',
+          password:  authType === 'password' && v('m-rpassword') ? v('m-rpassword') : '**hidden**',
         }});
         toast('Remote mis à jour', 'ok'); refreshRemoteCards();
       }
@@ -657,6 +665,14 @@ function closeModal(e) {
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function toggleModalAuth() {
+  const auth   = document.getElementById('m-rauth')?.value;
+  const keyWrap = document.getElementById('m-key-wrap');
+  const pwWrap  = document.getElementById('m-pw-wrap');
+  if (keyWrap) keyWrap.style.display = auth === 'key'      ? '' : 'none';
+  if (pwWrap)  pwWrap.style.display  = auth === 'password' ? '' : 'none';
+}
 
 // ─── Backup summary (dashboard) ──────────────────────────────────────────
 async function refreshBackupSummary() {
