@@ -51,11 +51,14 @@ def ftp_users():
         p = line.split('|')
         if not p or not p[0].strip():
             continue
+        home = p[2].strip() if len(p) > 2 else ''
+        if not home or not os.path.isdir(home):
+            continue
         sh = p[3].strip() if len(p) > 3 else ''
         users.append({
             'username': p[0].strip(),
             'uid':      p[1].strip() if len(p) > 1 else '',
-            'home':     p[2].strip() if len(p) > 2 else '',
+            'home':     home,
             'shell':    sh,
             'ftp_only': sh in _NOLOGIN_SHELLS,
             'locked':   run(['passwd', '-S', p[0].strip()])['out'].split()[1:2] == ['L'] if p[0].strip() else False
