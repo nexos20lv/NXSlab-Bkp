@@ -1,9 +1,12 @@
 """WebSocket terminal SSH — enregistré via register_terminal(sock)"""
 import json
+import socket
 import threading
 from flask import session
 from config import get_remote
 from backup_core import ssh_connect
+
+_TIMEOUT_EXC = (socket.timeout, TimeoutError)
 
 
 def register_terminal(sock):
@@ -26,24 +29,29 @@ def register_terminal(sock):
                 pass
             return
 
-        ssh = None
+        ssh  = None
         chan = None
+        _closed = threading.Event()
+
         try:
             ssh  = ssh_connect(remote)
             chan = ssh.invoke_shell(term='xterm-256color', width=120, height=40)
-            chan.settimeout(0.1)
+            chan.settimeout(0.2)
 
             def read_remote():
                 try:
-                    while not chan.closed:
+                    while not _closed.is_set() and not chan.closed:
                         try:
                             data = chan.recv(4096)
                             if not data:
                                 break
                             ws.send(data.decode('utf-8', errors='replace'))
+                        except _TIMEOUT_EXC:
+                            continue  # pas de données, on réessaie
                         except Exception:
                             break
                 finally:
+                    _closed.set()
                     try:
                         ws.close()
                     except Exception:
@@ -51,7 +59,7 @@ def register_terminal(sock):
 
             threading.Thread(target=read_remote, daemon=True).start()
 
-            while True:
+            while not _closed.is_set():
                 try:
                     msg = ws.receive()
                     if msg is None:
@@ -60,20 +68,25 @@ def register_terminal(sock):
                         try:
                             d = json.loads(msg)
                             if d.get('type') == 'resize':
-                                chan.resize_pty(width=int(d.get('cols', 80)), height=int(d.get('rows', 24)))
+                                chan.resize_pty(
+                                    width=int(d.get('cols', 80)),
+                                    height=int(d.get('rows', 24))
+                                )
                             continue
                         except Exception:
                             pass
                     chan.sendall(msg.encode('utf-8') if isinstance(msg, str) else msg)
                 except Exception:
                     break
+
         except Exception as e:
             try:
-                ws.send(f'\r\n\033[31m[Erreur: {e}]\033[0m\r\n')
+                ws.send(f'\r\n\033[31m[Erreur SSH: {e}]\033[0m\r\n')
                 ws.close()
             except Exception:
                 pass
         finally:
+            _closed.set()
             if chan:
                 try:
                     chan.close()
