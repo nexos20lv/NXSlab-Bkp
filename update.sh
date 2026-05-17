@@ -58,18 +58,31 @@ echo -e "${C}[2/5]${NC} Arrêt du service..."
 systemctl stop "$SERVICE" 2>/dev/null && echo -e "  ${G}✓${NC} Service arrêté" || echo -e "  ${Y}[!]${NC} Service déjà arrêté"
 
 echo -e "${C}[3/5]${NC} Mise à jour des fichiers..."
-if [ -f "$SRC/app.py" ]; then
-  cp "$SRC/app.py" "$INSTALL_DIR/"
-  echo -e "  ${G}✓${NC} app.py"
-else
-  echo -e "  ${Y}[!]${NC} app.py absent dans le dépôt — ignoré"
-fi
 
-if [ -d "$SRC/templates" ]; then
-  cp "$SRC/templates/"*.html "$INSTALL_DIR/templates/" 2>/dev/null && echo -e "  ${G}✓${NC} templates"
-fi
+# Ensure new directories exist
+mkdir -p "$INSTALL_DIR/templates/partials"
+mkdir -p "$INSTALL_DIR/static/css"
+mkdir -p "$INSTALL_DIR/static/js"
 
+# Python modules
+for f in app.py config.py helpers.py auth.py system.py samba.py ftp.py files.py users.py backup_core.py remotes.py backup.py terminal.py; do
+  if [ -f "$SRC/$f" ]; then
+    cp "$SRC/$f" "$INSTALL_DIR/"
+    echo -e "  ${G}✓${NC} $f"
+  fi
+done
 chmod 750 "$INSTALL_DIR/app.py" 2>/dev/null || true
+
+# Templates
+if [ -d "$SRC/templates" ]; then
+  cp "$SRC/templates/"*.html "$INSTALL_DIR/templates/" 2>/dev/null || true
+  [ -d "$SRC/templates/partials" ] && cp "$SRC/templates/partials/"*.html "$INSTALL_DIR/templates/partials/" 2>/dev/null || true
+  echo -e "  ${G}✓${NC} templates"
+fi
+
+# Static assets
+[ -f "$SRC/static/css/app.css" ] && cp "$SRC/static/css/app.css" "$INSTALL_DIR/static/css/" && echo -e "  ${G}✓${NC} static/css/app.css"
+[ -f "$SRC/static/js/app.js"  ] && cp "$SRC/static/js/app.js"  "$INSTALL_DIR/static/js/"  && echo -e "  ${G}✓${NC} static/js/app.js"
 
 echo -e "${C}[4/5]${NC} Mise à jour des dépendances Python..."
 "$INSTALL_DIR/venv/bin/pip" install --quiet --upgrade flask paramiko apscheduler flask-sock

@@ -68,7 +68,9 @@ echo -e "  ${G}✓${NC} python3, samba, vsftpd installés"
 
 # ── 2. Répertoires ───────────────────────────────────────────────────────────
 echo -e "${C}[2/6]${NC} Création des répertoires..."
-mkdir -p "$INSTALL_DIR/templates"
+mkdir -p "$INSTALL_DIR/templates/partials"
+mkdir -p "$INSTALL_DIR/static/css"
+mkdir -p "$INSTALL_DIR/static/js"
 mkdir -p "$CONFIG_DIR"
 mkdir -p "$DATA_DIR"
 chmod 775 "$DATA_DIR"
@@ -84,10 +86,21 @@ if [ ! -f "$SCRIPT_DIR/app.py" ]; then
   exit 1
 fi
 
-cp "$SCRIPT_DIR/app.py" "$INSTALL_DIR/"
+# Python modules
+for f in app.py config.py helpers.py auth.py system.py samba.py ftp.py files.py users.py backup_core.py remotes.py backup.py terminal.py; do
+  [ -f "$SCRIPT_DIR/$f" ] && cp "$SCRIPT_DIR/$f" "$INSTALL_DIR/"
+done
+chmod 750 "$INSTALL_DIR/app.py"
+
+# Templates
 cp "$SCRIPT_DIR/templates/login.html" "$INSTALL_DIR/templates/"
 cp "$SCRIPT_DIR/templates/index.html" "$INSTALL_DIR/templates/"
-chmod 750 "$INSTALL_DIR/app.py"
+cp "$SCRIPT_DIR/templates/partials/"*.html "$INSTALL_DIR/templates/partials/"
+
+# Static assets
+[ -f "$SCRIPT_DIR/static/css/app.css" ] && cp "$SCRIPT_DIR/static/css/app.css" "$INSTALL_DIR/static/css/"
+[ -f "$SCRIPT_DIR/static/js/app.js"  ] && cp "$SCRIPT_DIR/static/js/app.js"  "$INSTALL_DIR/static/js/"
+
 echo -e "  ${G}✓${NC} Fichiers copiés"
 
 # ── 4. Python venv + Flask ───────────────────────────────────────────────────
