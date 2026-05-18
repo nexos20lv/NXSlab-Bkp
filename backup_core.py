@@ -291,32 +291,27 @@ def run_backup(remote_id: str):
                         local_bind = os.path.join(cdir, safe_name + ext)
                         _log(state, f"    Bind: {src_path} → {dest_path}")
 
+                        # Vérifier l'accessibilité du chemin
+                        check_cmd = f'test -r "{src_path}" && echo readable || echo notreadable'
+                        rc_check, readable, _ = ssh_exec(ssh, check_cmd)
+                        if readable.strip() != "readable":
+                            continue  # Passer silencieusement les chemins non-accessibles
+
                         # Déterminer si fichier ou répertoire
-                        check_cmd = f'[ -f "{src_path}" ] && echo file || ([ -d "{src_path}" ] && echo dir || echo none)'
+                        check_cmd = f'[ -f "{src_path}" ] && echo file || echo dir'
                         rc_type, type_out, _ = ssh_exec(ssh, check_cmd)
                         path_type = type_out.strip()
 
-                        if path_type == "none":
-                            err_msg = f"Erreur bind {src_path} (chemin introuvable)"
-                            _log(state, f"    ⚠ {err_msg}")
-                            manifest['targets']['docker']['containers'][cname]['errors'].append(err_msg)
-                            continue
-                        elif path_type == "file":
-                            # Pour un fichier, tar le fichier lui-même
+                        if path_type == "file":
                             parent_dir = src_path.rsplit('/', 1)[0] or '/'
                             filename = src_path.rsplit('/', 1)[1]
-                            cmd = f'tar c{tar_flag}f - -C "{parent_dir}" "{filename}" 2>/dev/null'
+                            cmd = f'tar c{tar_flag}f - -C "{parent_dir}" "{filename}" --warning=no-file-ignored 2>/dev/null || true'
                         else:
-                            # Pour un répertoire, tar son contenu
-                            cmd = f'tar c{tar_flag}f - -C "{src_path}" . 2>/dev/null'
+                            cmd = f'tar c{tar_flag}f - -C "{src_path}" . --warning=no-file-ignored --ignore-failed-read 2>/dev/null || true'
 
                         rc2 = stream_remote(ssh, cmd, local_bind)
-                        if rc2 != 0:
-                            err_msg = f"Erreur bind {src_path} (rc={rc2})"
-                            _log(state, f"    ⚠ {err_msg}")
-                            manifest['targets']['docker']['containers'][cname]['errors'].append(err_msg)
-                        else:
-                            sz = os.path.getsize(local_bind) if os.path.exists(local_bind) else 0
+                        sz = os.path.getsize(local_bind) if os.path.exists(local_bind) else 0
+                        if sz > 0:
                             manifest['targets']['docker']['containers'][cname]['volumes'].append(
                                 {'name': f'bind:{dest_path}', 'source': src_path, 'file': safe_name + ext, 'size': sz, 'type': path_type})
                             if do_verify:
@@ -324,6 +319,12 @@ def run_backup(remote_id: str):
                                 _log(state, f"    Vérif: {'✓' if ok else '✗ CORROMPU'}")
                                 if not ok:
                                     manifest['errors'].append(f"Archive corrompue: {local_bind}")
+                            _log(state, f"    ✓ {safe_name} ({human_size(sz)})")
+                        else:
+                            try:
+                                os.remove(local_bind)
+                            except Exception:
+                                pass
 
                     if stop_before:
                         _log(state, f"    Redémarrage {cname}...")
