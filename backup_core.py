@@ -252,6 +252,7 @@ def run_backup(remote_id: str):
                         with open(os.path.join(cdir, 'inspect.json'), 'w') as f:
                             f.write(out)
 
+                    # Named volumes
                     fmt = '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}}|{{.Destination}}\n{{end}}{{end}}'
                     rc, out, _ = ssh_exec(ssh, f"docker inspect --format '{fmt}' {cname} 2>/dev/null")
                     for line in out.splitlines():
@@ -276,6 +277,34 @@ def run_backup(remote_id: str):
                                 _log(state, f"    Vérif: {'✓' if ok else '✗ CORROMPU'}")
                                 if not ok:
                                     manifest['errors'].append(f"Archive corrompue: {local_vol}")
+
+                    # Bind mounts
+                    fmt = '{{range .Mounts}}{{if eq .Type "bind"}}{{.Source}}|{{.Destination}}\n{{end}}{{end}}'
+                    rc, out, _ = ssh_exec(ssh, f"docker inspect --format '{fmt}' {cname} 2>/dev/null")
+                    for line in out.splitlines():
+                        parts = line.strip().split('|')
+                        if not parts or len(parts) < 2:
+                            continue
+                        src_path = parts[0]
+                        dest_path = parts[1]
+                        safe_name = dest_path.strip('/').replace('/', '_')
+                        local_bind = os.path.join(cdir, safe_name + ext)
+                        _log(state, f"    Bind: {src_path} → {dest_path}")
+                        cmd = f'tar c{tar_flag}f - -C "{src_path}" . 2>/dev/null'
+                        rc2 = stream_remote(ssh, cmd, local_bind)
+                        if rc2 != 0:
+                            err_msg = f"Erreur bind {src_path} (rc={rc2})"
+                            _log(state, f"    ⚠ {err_msg}")
+                            manifest['targets']['docker']['containers'][cname]['errors'].append(err_msg)
+                        else:
+                            sz = os.path.getsize(local_bind) if os.path.exists(local_bind) else 0
+                            manifest['targets']['docker']['containers'][cname]['volumes'].append(
+                                {'name': f'bind:{dest_path}', 'source': src_path, 'file': safe_name + ext, 'size': sz})
+                            if do_verify:
+                                ok = verify_archive(local_bind, compression)
+                                _log(state, f"    Vérif: {'✓' if ok else '✗ CORROMPU'}")
+                                if not ok:
+                                    manifest['errors'].append(f"Archive corrompue: {local_bind}")
 
                     if stop_before:
                         _log(state, f"    Redémarrage {cname}...")
