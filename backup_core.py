@@ -257,7 +257,7 @@ def run_backup(remote_id: str):
                     rc, out, _ = ssh_exec(ssh, f"docker inspect --format '{fmt}' {cname} 2>/dev/null")
                     for line in out.splitlines():
                         parts = line.strip().split('|')
-                        if not parts:
+                        if not parts or not parts[0]:
                             continue
                         vol_name  = parts[0]
                         local_vol = os.path.join(cdir, vol_name + ext)
@@ -290,7 +290,26 @@ def run_backup(remote_id: str):
                         safe_name = dest_path.strip('/').replace('/', '_')
                         local_bind = os.path.join(cdir, safe_name + ext)
                         _log(state, f"    Bind: {src_path} → {dest_path}")
-                        cmd = f'tar c{tar_flag}f - -C "{src_path}" . 2>/dev/null'
+
+                        # Déterminer si fichier ou répertoire
+                        check_cmd = f'[ -f "{src_path}" ] && echo file || ([ -d "{src_path}" ] && echo dir || echo none)'
+                        rc_type, type_out, _ = ssh_exec(ssh, check_cmd)
+                        path_type = type_out.strip()
+
+                        if path_type == "none":
+                            err_msg = f"Erreur bind {src_path} (chemin introuvable)"
+                            _log(state, f"    ⚠ {err_msg}")
+                            manifest['targets']['docker']['containers'][cname]['errors'].append(err_msg)
+                            continue
+                        elif path_type == "file":
+                            # Pour un fichier, tar le fichier lui-même
+                            parent_dir = src_path.rsplit('/', 1)[0] or '/'
+                            filename = src_path.rsplit('/', 1)[1]
+                            cmd = f'tar c{tar_flag}f - -C "{parent_dir}" "{filename}" 2>/dev/null'
+                        else:
+                            # Pour un répertoire, tar son contenu
+                            cmd = f'tar c{tar_flag}f - -C "{src_path}" . 2>/dev/null'
+
                         rc2 = stream_remote(ssh, cmd, local_bind)
                         if rc2 != 0:
                             err_msg = f"Erreur bind {src_path} (rc={rc2})"
@@ -299,7 +318,7 @@ def run_backup(remote_id: str):
                         else:
                             sz = os.path.getsize(local_bind) if os.path.exists(local_bind) else 0
                             manifest['targets']['docker']['containers'][cname]['volumes'].append(
-                                {'name': f'bind:{dest_path}', 'source': src_path, 'file': safe_name + ext, 'size': sz})
+                                {'name': f'bind:{dest_path}', 'source': src_path, 'file': safe_name + ext, 'size': sz, 'type': path_type})
                             if do_verify:
                                 ok = verify_archive(local_bind, compression)
                                 _log(state, f"    Vérif: {'✓' if ok else '✗ CORROMPU'}")
