@@ -291,11 +291,11 @@ def run_backup(remote_id: str):
                         local_bind = os.path.join(cdir, safe_name + ext)
                         _log(state, f"    Bind: {src_path} → {dest_path}")
 
-                        # Vérifier l'accessibilité du chemin
-                        check_cmd = f'test -r "{src_path}" && echo readable || echo notreadable'
-                        rc_check, readable, _ = ssh_exec(ssh, check_cmd)
-                        if readable.strip() != "readable":
-                            continue  # Passer silencieusement les chemins non-accessibles
+                        # Vérifier que le chemin existe
+                        check_cmd = f'test -e "{src_path}" && echo exists || echo notfound'
+                        rc_check, exists, _ = ssh_exec(ssh, check_cmd)
+                        if exists.strip() != "exists":
+                            continue
 
                         # Déterminer si fichier ou répertoire
                         check_cmd = f'[ -f "{src_path}" ] && echo file || echo dir'
@@ -303,28 +303,32 @@ def run_backup(remote_id: str):
                         path_type = type_out.strip()
 
                         if path_type == "file":
+                            # Pour un fichier, utiliser cat + gzip (plus robuste que tar)
                             parent_dir = src_path.rsplit('/', 1)[0] or '/'
                             filename = src_path.rsplit('/', 1)[1]
-                            cmd = f'tar c{tar_flag}f - -C "{parent_dir}" "{filename}" --warning=no-file-ignored 2>/dev/null || true'
+                            cmd = f'cat "{src_path}" 2>/dev/null | gzip -c'
                         else:
-                            cmd = f'tar c{tar_flag}f - -C "{src_path}" . --warning=no-file-ignored --ignore-failed-read 2>/dev/null || true'
+                            # Pour un répertoire, tar avec dereference et ignore permissions
+                            cmd = f'tar c{tar_flag}f - -L --no-same-permissions --no-same-owner --ignore-failed-read -C "{src_path}" . 2>/dev/null || true'
 
                         rc2 = stream_remote(ssh, cmd, local_bind)
                         sz = os.path.getsize(local_bind) if os.path.exists(local_bind) else 0
+
                         if sz > 0:
                             manifest['targets']['docker']['containers'][cname]['volumes'].append(
                                 {'name': f'bind:{dest_path}', 'source': src_path, 'file': safe_name + ext, 'size': sz, 'type': path_type})
-                            if do_verify:
+                            _log(state, f"    ✓ {safe_name} ({human_size(sz)})")
+                            if do_verify and path_type == "dir":
                                 ok = verify_archive(local_bind, compression)
                                 _log(state, f"    Vérif: {'✓' if ok else '✗ CORROMPU'}")
                                 if not ok:
                                     manifest['errors'].append(f"Archive corrompue: {local_bind}")
-                            _log(state, f"    ✓ {safe_name} ({human_size(sz)})")
                         else:
                             try:
                                 os.remove(local_bind)
                             except Exception:
                                 pass
+                            _log(state, f"    ⊘ {safe_name} (vide ou inaccessible)")
 
                     if stop_before:
                         _log(state, f"    Redémarrage {cname}...")
