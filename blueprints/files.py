@@ -1,9 +1,9 @@
 """Routes explorateur de fichiers — /api/files/*"""
 import os, shutil
 from flask import Blueprint, request, jsonify, send_file
-from auth import login_required
-from config import get_data_dir
-from helpers import human_size
+from blueprints.auth import login_required
+from core.config import get_data_dir
+from core.helpers import human_size
 from datetime import datetime
 
 files_bp = Blueprint('files', __name__)

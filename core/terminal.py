@@ -3,8 +3,8 @@ import json
 import socket
 import threading
 from flask import session
-from config import get_remote
-from backup_core import ssh_connect
+from core.config import get_remote
+from core.backup_core import ssh_connect
 
 _TIMEOUT_EXC = (socket.timeout, TimeoutError)
 
@@ -47,7 +47,7 @@ def register_terminal(sock):
                                 break
                             ws.send(data.decode('utf-8', errors='replace'))
                         except _TIMEOUT_EXC:
-                            continue  # pas de données, on réessaie
+                            continue
                         except Exception:
                             break
                 finally:

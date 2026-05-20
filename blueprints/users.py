@@ -1,9 +1,9 @@
 """Routes gestion utilisateurs WebUI — /api/users/* /api/settings/*"""
 import re
 from flask import Blueprint, request, jsonify, session
-from auth import login_required, admin_required
-from config import load_config, save_config
-from helpers import hash_pw
+from blueprints.auth import login_required, admin_required
+from core.config import load_config, save_config
+from core.helpers import hash_pw
 
 users_bp = Blueprint('users', __name__)
 

@@ -1,13 +1,11 @@
 """Authentification — décorateurs et routes /login /logout /"""
 from functools import wraps
 from flask import Blueprint, session, request, jsonify, redirect, url_for, render_template
-from config import load_config
-from helpers import hash_pw
+from core.config import load_config
+from core.helpers import hash_pw
 
 auth_bp = Blueprint('auth', __name__)
 
-
-# ─── Décorateurs ─────────────────────────────────────────────────────────────
 
 def login_required(f):
     @wraps(f)
@@ -37,8 +35,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-
-# ─── Routes ──────────────────────────────────────────────────────────────────
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():

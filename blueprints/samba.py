@@ -1,8 +1,8 @@
 """Routes Samba — /api/samba/*"""
 import configparser
 from flask import Blueprint, request, jsonify
-from auth import login_required, admin_required
-from helpers import run, shell, valid_username, setup_data_access
+from blueprints.auth import login_required, admin_required
+from core.helpers import run, shell, valid_username, setup_data_access
 
 samba_bp = Blueprint('samba', __name__)
 

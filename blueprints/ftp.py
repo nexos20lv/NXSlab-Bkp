@@ -1,9 +1,10 @@
 """Routes FTP — /api/ftp/*"""
 import os
+import re
 from flask import Blueprint, request, jsonify
-from auth import login_required, admin_required
-from helpers import run, shell, valid_username, setup_data_access
-from config import get_data_dir
+from blueprints.auth import login_required, admin_required
+from core.helpers import run, shell, valid_username, setup_data_access
+from core.config import get_data_dir
 
 ftp_bp = Blueprint('ftp', __name__)
 
@@ -142,7 +143,7 @@ def ftp_user_homedir():
     if not valid_username(username):                 return jsonify({'error': "Nom d'utilisateur invalide"}), 400
     if not re.match(r'^/[a-zA-Z0-9/_.-]+$', new_home): return jsonify({'error': 'Chemin invalide'}), 400
     os.makedirs(new_home, exist_ok=True)
-    r = run(['usermod', '-d', new_home, '-m', username])
+    r = run(['usermod', '-d', new_home, '-m', username)
     if r['ok']:
         run(['chown', f'{username}:{username}', new_home])
     return jsonify({'ok': r['ok'], 'message': r['err'] or 'Répertoire modifié'})

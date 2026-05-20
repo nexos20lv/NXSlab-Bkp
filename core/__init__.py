@@ -1,0 +1,1 @@
+"""Noyau applicatif NXSlab."""

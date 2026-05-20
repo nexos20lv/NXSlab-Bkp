@@ -1,16 +1,16 @@
 """Routes système — /health /api/status /api/system /api/logs/*"""
 from datetime import datetime
 from flask import Blueprint, request, jsonify, session
-from auth import login_required
-from config import load_config, get_data_dir, APP_START
-from helpers import svc_state, shell
+from blueprints.auth import login_required
+from core.config import load_config, get_data_dir, APP_START
+from core.helpers import svc_state, shell
 
 system_bp = Blueprint('system', __name__)
 
 
 @system_bp.route('/health')
 def health():
-    from backup_core import get_backup_state, HAS_PARAMIKO, HAS_SCHEDULER
+    from core.backup_core import get_backup_state, HAS_PARAMIKO, HAS_SCHEDULER
     import flask
     c          = load_config()
     uptime_sec = int((datetime.now() - APP_START).total_seconds())

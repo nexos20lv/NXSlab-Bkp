@@ -24,11 +24,9 @@ except ImportError:
     _scheduler   = None
     HAS_SCHEDULER = False
 
-from config import load_config, get_data_dir, get_remote
-from helpers import human_size
+from core.config import load_config, get_data_dir, get_remote
+from core.helpers import human_size
 
-
-# ─── SSH helpers ──────────────────────────────────────────────────────────────
 
 def ssh_connect(remote: dict):
     if not HAS_PARAMIKO:
@@ -117,8 +115,6 @@ def next_cron_run(schedule: str):
         return None
 
 
-# ─── State & locks ────────────────────────────────────────────────────────────
-
 _backup_states: dict = {}
 _backup_locks:  dict = {}
 
@@ -145,8 +141,6 @@ def _log(state: dict, msg: str):
     state['progress'] = msg
 
 
-# ─── Scheduler ────────────────────────────────────────────────────────────────
-
 def apply_schedule():
     if not HAS_SCHEDULER:
         return
@@ -167,8 +161,6 @@ def apply_schedule():
     except Exception:
         pass
 
-
-# ─── run_backup ───────────────────────────────────────────────────────────────
 
 def run_backup(remote_id: str):
     remote = get_remote(remote_id)
@@ -220,7 +212,6 @@ def run_backup(remote_id: str):
 
             targets = backup.get('targets', ['docker', 'websites', 'configs'])
 
-            # ── Docker ────────────────────────────────────────────────────
             if 'docker' in targets:
                 _log(state, "══ Backup Docker ══")
                 state['percent'] = 10
@@ -252,7 +243,6 @@ def run_backup(remote_id: str):
                         with open(os.path.join(cdir, 'inspect.json'), 'w') as f:
                             f.write(out)
 
-                    # Named volumes
                     fmt = '{{range .Mounts}}{{if eq .Type "volume"}}{{.Name}}|{{.Destination}}\n{{end}}{{end}}'
                     rc, out, _ = ssh_exec(ssh, f"docker inspect --format '{fmt}' {cname} 2>/dev/null")
                     for line in out.splitlines():
@@ -278,7 +268,6 @@ def run_backup(remote_id: str):
                                 if not ok:
                                     manifest['errors'].append(f"Archive corrompue: {local_vol}")
 
-                    # Bind mounts
                     fmt = '{{range .Mounts}}{{if eq .Type "bind"}}{{.Source}}|{{.Destination}}\n{{end}}{{end}}'
                     rc, out, _ = ssh_exec(ssh, f"docker inspect --format '{fmt}' {cname} 2>/dev/null")
                     for line in out.splitlines():
@@ -291,24 +280,18 @@ def run_backup(remote_id: str):
                         local_bind = os.path.join(cdir, safe_name + ext)
                         _log(state, f"    Bind: {src_path} → {dest_path}")
 
-                        # Vérifier que le chemin existe
                         check_cmd = f'test -e "{src_path}" && echo exists || echo notfound'
                         rc_check, exists, _ = ssh_exec(ssh, check_cmd)
                         if exists.strip() != "exists":
                             continue
 
-                        # Déterminer si fichier ou répertoire
                         check_cmd = f'[ -f "{src_path}" ] && echo file || echo dir'
                         rc_type, type_out, _ = ssh_exec(ssh, check_cmd)
                         path_type = type_out.strip()
 
                         if path_type == "file":
-                            # Pour un fichier, utiliser cat + gzip (plus robuste que tar)
-                            parent_dir = src_path.rsplit('/', 1)[0] or '/'
-                            filename = src_path.rsplit('/', 1)[1]
                             cmd = f'cat "{src_path}" 2>/dev/null | gzip -c'
                         else:
-                            # Pour un répertoire, tar avec dereference et ignore permissions
                             cmd = f'tar c{tar_flag}f - -L --no-same-permissions --no-same-owner --ignore-failed-read -C "{src_path}" . 2>/dev/null || true'
 
                         rc2 = stream_remote(ssh, cmd, local_bind)
@@ -336,7 +319,6 @@ def run_backup(remote_id: str):
 
             state['percent'] = 35
 
-            # ── Bases de données ──────────────────────────────────────────
             if 'databases' in targets:
                 _log(state, "══ Backup Bases de données ══")
                 db_dir = os.path.join(backup_path, 'databases')
@@ -382,7 +364,6 @@ def run_backup(remote_id: str):
 
             state['percent'] = 55
 
-            # ── Sites web ─────────────────────────────────────────────────
             if 'websites' in targets:
                 _log(state, "══ Backup sites web ══")
                 web_dir = os.path.join(backup_path, 'websites')
@@ -406,7 +387,6 @@ def run_backup(remote_id: str):
 
             state['percent'] = 75
 
-            # ── Configurations ────────────────────────────────────────────
             if 'configs' in targets:
                 _log(state, "══ Backup configurations ══")
                 cfg_dir = os.path.join(backup_path, 'configs')
@@ -427,7 +407,6 @@ def run_backup(remote_id: str):
             ssh.close()
             ssh = None
 
-            # ── Post-hook ─────────────────────────────────────────────────
             post_hook = backup.get('post_hook', '').strip()
             if post_hook and HAS_PARAMIKO:
                 ssh2 = ssh_connect(remote)
@@ -436,7 +415,6 @@ def run_backup(remote_id: str):
                 _log(state, f"  Hook: {'OK' if rc == 0 else 'ERREUR'} {(out + err).strip()[:200]}")
                 ssh2.close()
 
-            # ── Rotation par nombre ────────────────────────────────────────
             bkp_root  = os.path.join(data_dir, 'backups', subdir)
             existing  = sorted([d for d in os.listdir(bkp_root) if os.path.isdir(os.path.join(bkp_root, d))])
             max_count = int(backup.get('max_count', 7))
@@ -444,7 +422,6 @@ def run_backup(remote_id: str):
                 _log(state, f"Rotation (count) → suppression: {old}")
                 shutil.rmtree(os.path.join(bkp_root, old), ignore_errors=True)
 
-            # ── Rotation par âge ──────────────────────────────────────────
             max_days = int(backup.get('max_days', 0))
             if max_days > 0:
                 cutoff = datetime.now() - timedelta(days=max_days)
@@ -454,7 +431,6 @@ def run_backup(remote_id: str):
                         _log(state, f"Rotation (âge >{max_days}j) → suppression: {d}")
                         shutil.rmtree(full_d, ignore_errors=True)
 
-            # ── Manifest ──────────────────────────────────────────────────
             manifest['finished_at'] = datetime.now().isoformat()
             manifest['status']      = 'ok'
             manifest['backup_path'] = backup_path

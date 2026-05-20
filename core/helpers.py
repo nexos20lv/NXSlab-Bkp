@@ -35,7 +35,7 @@ def svc_state(name: str) -> str:
 
 
 def setup_data_access(username: str) -> None:
-    from config import get_data_dir
+    from core.config import get_data_dir
     data_dir = get_data_dir()
     run(['groupadd',  '-f',  'nxslab-data'])
     run(['chgrp',  'nxslab-data', data_dir])

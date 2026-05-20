@@ -6,10 +6,10 @@ from datetime import datetime
 from pathlib import Path
 from flask import Blueprint, request, jsonify, session
 
-from auth import login_required, admin_required
-from config import load_config, save_config, get_data_dir, get_remote
-from helpers import human_size
-from backup_core import (
+from blueprints.auth import login_required, admin_required
+from core.config import load_config, save_config, get_data_dir, get_remote
+from core.helpers import human_size
+from core.backup_core import (
     ssh_connect, ssh_exec,
     get_backup_state, apply_schedule, run_backup,
     HAS_PARAMIKO, HAS_SCHEDULER,
