@@ -9,6 +9,7 @@ B='\033[1m' D='\033[2m' NC='\033[0m'
 INSTALL_DIR="/opt/nxslab-bkp"
 CONFIG_DIR="/etc/nxslab-bkp"
 SERVICE="nxslab-bkp"
+REPO_URL="https://github.com/nexos20lv/NXSlab-Bkp.git"
 
 PY_MODULES="app.py config.py helpers.py auth.py system.py samba.py ftp.py files.py users.py backup_core.py remotes.py backup.py terminal.py"
 

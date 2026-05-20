@@ -9,7 +9,7 @@ B='\033[1m' D='\033[2m' NC='\033[0m'
 INSTALL_DIR="/opt/nxslab-bkp"
 CONFIG_DIR="/etc/nxslab-bkp"
 SERVICE="nxslab-bkp"
-REPO_URL="https://git.nxslab.in/Pierre/NXSlab-Bkp"
+REPO_URL="https://github.com/nexos20lv/NXSlab-Bkp.git"
 TMP_DIR=$(mktemp -d)
 BACKUP_DIR=""
 
