@@ -76,7 +76,7 @@ docker --version    # optionnel, pour sauvegardes Docker
 
 ```bash
 # Cloner le dépôt
-git clone https://git.nxslab.in/Pierre/NXSlab-Bkp
+git clone https://github.com/nexos20lv/NXSlab-Bkp.git
 cd NXSlab-Bkp
 
 # Lancer l'installation
@@ -848,10 +848,10 @@ curl http://localhost:5080/api/backup/settings/vps01 | grep max_
 ┌─ SERVEUR NXSlab ────────────────────────────────────┐
 │                                                     │
 │  ┌─ Flask (Python 3.8+) ──────────────────────┐   │
-│  │ • Authentication (auth.py)                 │   │
-│  │ • REST API routes (*.py)                   │   │
+│  │ • Core app logic (core/)                   │   │
+│  │ • Blueprints API/routes (blueprints/)      │   │
 │  │ • Static files (CSS, JS)                   │   │
-│  │ • WebSocket terminal (terminal.py)         │   │
+│  │ • WebSocket terminal (core/terminal.py)    │   │
 │  │ • Templating (Jinja2)                      │   │
 │  └────────────────────────────────────────────┘   │
 │                   ↓                                 │
@@ -1172,7 +1172,7 @@ NXSlab Backup WebUI — © 2025 NeXoS_20
 
 ## 🤝 Support
 
-- **Issues & Bugs** : https://git.nxslab.in/Pierre/NXSlab-Bkp/issues
+- **Issues & Bugs** : https://github.com/nexos20lv/NXSlab-Bkp/issues
 - **Documentation** : Ce README
 - **Logs** : `journalctl -u nxslab-bkp -f`
 
