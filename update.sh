@@ -1,5 +1,5 @@
 #!/bin/bash
-# NXSlab Backup WebUI — Update script
+# NXSlab Backup WebUI â€” Update script
 # Usage: sudo bash update.sh
 set -euo pipefail
 
@@ -10,148 +10,163 @@ INSTALL_DIR="/opt/nxslab-bkp"
 CONFIG_DIR="/etc/nxslab-bkp"
 SERVICE="nxslab-bkp"
 REPO_URL="https://github.com/nexos20lv/NXSlab-Bkp.git"
+REPO_HTTP_URL="${REPO_URL%.git}"
 TMP_DIR=$(mktemp -d)
 BACKUP_DIR=""
 
-PY_MODULES="app.py config.py helpers.py auth.py system.py samba.py ftp.py files.py users.py backup_core.py remotes.py backup.py terminal.py"
+APP_FILES=(app.py)
+APP_DIRS=(core blueprints)
+ASSET_DIRS=(templates static)
+LEGACY_MODULES=(config.py helpers.py auth.py system.py samba.py ftp.py files.py users.py backup_core.py remotes.py backup.py terminal.py)
 
 echo ""
-echo -e "${C}  ███╗   ██╗██╗  ██╗███████╗██╗      █████╗ ██████╗ ${NC}"
-echo -e "${C}  ████╗  ██║╚██╗██╔╝██╔════╝██║     ██╔══██╗██╔══██╗${NC}"
-echo -e "${C}  ██╔██╗ ██║ ╚███╔╝ ███████╗██║     ███████║██████╔╝${NC}"
-echo -e "${C}  ██║╚██╗██║ ██╔██╗ ╚════██║██║     ██╔══██║██╔══██╗${NC}"
-echo -e "${C}  ██║ ╚████║██╔╝ ██╗███████║███████╗██║  ██║██████╔╝${NC}"
-echo -e "${C}  ╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝╚═════╝${NC}"
-echo -e "${D}        Backup WebUI — Mise à jour${NC}"
+echo -e "${C}  â–ˆâ–ˆâ–ˆâ•—   â–ˆâ–ˆâ•—â–ˆâ–ˆâ•—  â–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•—      â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•— ${NC}"
+echo -e "${C}  â–ˆâ–ˆâ–ˆâ–ˆâ•—  â–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â–ˆâ–ˆâ•”â•â•â•â•â•â–ˆâ–ˆâ•‘     â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—${NC}"
+echo -e "${C}  â–ˆâ–ˆâ•”â–ˆâ–ˆâ•— â–ˆâ–ˆâ•‘ â•šâ–ˆâ–ˆâ–ˆâ•”â• â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘     â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•${NC}"
+echo -e "${C}  â–ˆâ–ˆâ•‘â•šâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘ â–ˆâ–ˆâ•”â–ˆâ–ˆâ•— â•šâ•â•â•â•â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•‘     â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•—${NC}"
+echo -e "${C}  â–ˆâ–ˆâ•‘ â•šâ–ˆâ–ˆâ–ˆâ–ˆâ•‘â–ˆâ–ˆâ•”â• â–ˆâ–ˆâ•—â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•”â•${NC}"
+echo -e "${C}  â•šâ•â•  â•šâ•â•â•â•â•šâ•â•  â•šâ•â•â•šâ•â•â•â•â•â•â•â•šâ•â•â•â•â•â•â•â•šâ•â•  â•šâ•â•â•šâ•â•â•â•â•â•${NC}"
+echo -e "${D}        Backup WebUI â€” Mise Ã  jour${NC}"
 echo ""
 
-# ── Vérifications ─────────────────────────────────────────────────────────────
+# â”€â”€ VÃ©rifications â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 if [ "$EUID" -ne 0 ]; then
-  echo -e "${R}[✗] Ce script doit être exécuté en tant que root (sudo).${NC}"
+  echo -e "${R}[âœ—] Ce script doit Ãªtre exÃ©cutÃ© en tant que root (sudo).${NC}"
   exit 1
 fi
 
 if [ ! -d "$INSTALL_DIR" ]; then
-  echo -e "${R}[✗] Installation introuvable dans $INSTALL_DIR${NC}"
+  echo -e "${R}[âœ—] Installation introuvable dans $INSTALL_DIR${NC}"
   echo -e "    Lancez d'abord install.sh"
   exit 1
 fi
 
-# ── Rollback automatique en cas d'erreur ──────────────────────────────────────
+# â”€â”€ Rollback automatique en cas d'erreur â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 rollback() {
-  echo -e "\n${R}[✗] Erreur pendant la mise à jour — rollback...${NC}"
+  echo -e "\n${R}[âœ—] Erreur pendant la mise Ã  jour â€” rollback...${NC}"
   if [ -n "$BACKUP_DIR" ] && [ -d "$BACKUP_DIR" ]; then
-    cp "$BACKUP_DIR/"*.py "$INSTALL_DIR/" 2>/dev/null || true
-    echo -e "  ${Y}[!]${NC} Fichiers Python restaurés depuis la sauvegarde"
+    cp -a "$BACKUP_DIR/." "$INSTALL_DIR/" 2>/dev/null || true
+    echo -e "  ${Y}[!]${NC} Code restaurÃ© depuis la sauvegarde"
   fi
   systemctl start "$SERVICE" 2>/dev/null || true
   rm -rf "$TMP_DIR"
-  echo -e "  ${Y}[!]${NC} Vérifiez les logs : ${D}journalctl -u $SERVICE -n 30${NC}"
+  echo -e "  ${Y}[!]${NC} VÃ©rifiez les logs : ${D}journalctl -u $SERVICE -n 30${NC}"
   exit 1
 }
 trap rollback ERR
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# ── 1. Téléchargement ─────────────────────────────────────────────────────────
+# â”€â”€ 1. TÃ©lÃ©chargement â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-echo -e "${C}[1/5]${NC} Téléchargement depuis le dépôt..."
+echo -e "${C}[1/5]${NC} TÃ©lÃ©chargement depuis le dÃ©pÃ´t..."
 SRC="$TMP_DIR/repo"
 
 if command -v git &>/dev/null; then
   git clone --depth 1 --quiet "$REPO_URL" "$SRC" 2>/dev/null || {
-    echo -e "${R}[✗] Impossible de cloner le dépôt. Vérifiez la connectivité.${NC}"
+    echo -e "${R}[âœ—] Impossible de cloner le dÃ©pÃ´t. VÃ©rifiez la connectivitÃ©.${NC}"
     exit 1
   }
 else
-  echo -e "  ${Y}[!]${NC} git non trouvé, téléchargement via curl..."
-  curl -fsSL "${REPO_URL}/archive/refs/heads/master.tar.gz" -o "$TMP_DIR/repo.tar.gz" || {
-    echo -e "${R}[✗] Téléchargement échoué.${NC}"
+  echo -e "  ${Y}[!]${NC} git non trouvÃ©, tÃ©lÃ©chargement via curl..."
+  curl -fsSL "${REPO_HTTP_URL}/archive/refs/heads/master.tar.gz" -o "$TMP_DIR/repo.tar.gz" || {
+    echo -e "${R}[âœ—] TÃ©lÃ©chargement Ã©chouÃ©.${NC}"
     exit 1
   }
   mkdir -p "$SRC"
   tar -xzf "$TMP_DIR/repo.tar.gz" -C "$SRC" --strip-components=1
 fi
 
-# Vérifier que les fichiers essentiels sont présents
-if [ ! -f "$SRC/app.py" ] || [ ! -f "$SRC/config.py" ]; then
-  echo -e "${R}[✗] Sources incomplètes (app.py ou config.py manquant).${NC}"
+# VÃ©rifier que les fichiers essentiels sont prÃ©sents
+if [ ! -f "$SRC/app.py" ] || [ ! -f "$SRC/core/config.py" ] || [ ! -f "$SRC/blueprints/auth.py" ]; then
+  echo -e "${R}[âœ—] Sources incomplÃ¨tes (app.py, core/config.py ou blueprints/auth.py manquant).${NC}"
   exit 1
 fi
-echo -e "  ${G}✓${NC} Sources téléchargées"
+echo -e "  ${G}âœ“${NC} Sources tÃ©lÃ©chargÃ©es"
 
-# ── 2. Sauvegarde des fichiers actuels ────────────────────────────────────────
+# â”€â”€ 2. Sauvegarde des fichiers actuels â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 echo -e "${C}[2/5]${NC} Sauvegarde des fichiers actuels..."
 BACKUP_DIR="$TMP_DIR/backup"
 mkdir -p "$BACKUP_DIR"
-for f in $PY_MODULES; do
-  [ -f "$INSTALL_DIR/$f" ] && cp "$INSTALL_DIR/$f" "$BACKUP_DIR/"
+for f in "${APP_FILES[@]}"; do
+  [ -f "$INSTALL_DIR/$f" ] && cp -a "$INSTALL_DIR/$f" "$BACKUP_DIR/"
 done
-echo -e "  ${G}✓${NC} Sauvegarde dans $BACKUP_DIR"
+for d in "${APP_DIRS[@]}" "${ASSET_DIRS[@]}"; do
+  [ -d "$INSTALL_DIR/$d" ] && cp -a "$INSTALL_DIR/$d" "$BACKUP_DIR/"
+done
+echo -e "  ${G}âœ“${NC} Sauvegarde dans $BACKUP_DIR"
 
-# ── 3. Arrêt du service ───────────────────────────────────────────────────────
+# â”€â”€ 3. ArrÃªt du service â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-echo -e "${C}[3/5]${NC} Arrêt du service..."
+echo -e "${C}[3/5]${NC} ArrÃªt du service..."
 if systemctl is-active "$SERVICE" --quiet 2>/dev/null; then
   systemctl stop "$SERVICE"
-  echo -e "  ${G}✓${NC} Service arrêté"
+  echo -e "  ${G}âœ“${NC} Service arrÃªtÃ©"
 else
-  echo -e "  ${D}(service déjà arrêté)${NC}"
+  echo -e "  ${D}(service dÃ©jÃ  arrÃªtÃ©)${NC}"
 fi
 
-# ── 4. Mise à jour des fichiers ───────────────────────────────────────────────
+# â”€â”€ 4. Mise Ã  jour des fichiers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-echo -e "${C}[4/5]${NC} Mise à jour des fichiers..."
+echo -e "${C}[4/5]${NC} Mise Ã  jour des fichiers..."
 
-# Créer les nouveaux répertoires si nécessaire
+# CrÃ©er les nouveaux rÃ©pertoires si nÃ©cessaire
+mkdir -p "$INSTALL_DIR/core"
+mkdir -p "$INSTALL_DIR/blueprints"
 mkdir -p "$INSTALL_DIR/templates/partials"
 mkdir -p "$INSTALL_DIR/static/css"
 mkdir -p "$INSTALL_DIR/static/js"
 
-# Modules Python
+# Code applicatif
 UPDATED=0
-for f in $PY_MODULES; do
+for f in "${APP_FILES[@]}"; do
   if [ -f "$SRC/$f" ]; then
     cp "$SRC/$f" "$INSTALL_DIR/"
     UPDATED=$((UPDATED + 1))
   fi
 done
+for d in "${APP_DIRS[@]}"; do
+  if [ -d "$SRC/$d" ]; then
+    rm -rf "$INSTALL_DIR/$d"
+    cp -a "$SRC/$d" "$INSTALL_DIR/"
+    UPDATED=$((UPDATED + 1))
+  fi
+done
+
+for f in "${LEGACY_MODULES[@]}"; do
+  [ -f "$INSTALL_DIR/$f" ] && rm -f "$INSTALL_DIR/$f"
+done
+
 chmod 750 "$INSTALL_DIR/app.py"
-echo -e "  ${G}✓${NC} $UPDATED modules Python"
+echo -e "  ${G}âœ“${NC} $UPDATED Ã©lÃ©ments applicatifs"
 
 # Templates
 TPL_COUNT=0
 if [ -d "$SRC/templates" ]; then
-  for f in "$SRC/templates/"*.html; do
-    [ -f "$f" ] && cp "$f" "$INSTALL_DIR/templates/" && TPL_COUNT=$((TPL_COUNT + 1))
-  done
-  if [ -d "$SRC/templates/partials" ]; then
-    for f in "$SRC/templates/partials/"*.html; do
-      [ -f "$f" ] && cp "$f" "$INSTALL_DIR/templates/partials/" && TPL_COUNT=$((TPL_COUNT + 1))
-    done
-  fi
+  rm -rf "$INSTALL_DIR/templates"
+  cp -a "$SRC/templates" "$INSTALL_DIR/"
+  TPL_COUNT=$(find "$SRC/templates" -type f -name '*.html' | wc -l)
 fi
-echo -e "  ${G}✓${NC} $TPL_COUNT templates"
+echo -e "  ${G}âœ“${NC} $TPL_COUNT templates"
 
 # Assets statiques
 STATIC_COUNT=0
-[ -f "$SRC/static/css/app.css" ] && cp "$SRC/static/css/app.css" "$INSTALL_DIR/static/css/" && STATIC_COUNT=$((STATIC_COUNT + 1))
-[ -f "$SRC/static/js/app.js"  ] && cp "$SRC/static/js/app.js"  "$INSTALL_DIR/static/js/"  && STATIC_COUNT=$((STATIC_COUNT + 1))
-[ "$STATIC_COUNT" -gt 0 ] && echo -e "  ${G}✓${NC} $STATIC_COUNT fichiers statiques"
+[ -d "$SRC/static" ] && rm -rf "$INSTALL_DIR/static" && cp -a "$SRC/static" "$INSTALL_DIR/" && STATIC_COUNT=$(find "$SRC/static" -type f | wc -l)
+[ "$STATIC_COUNT" -gt 0 ] && echo -e "  ${G}âœ“${NC} $STATIC_COUNT fichiers statiques"
 
-# Dépendances Python
-echo -e "${C}[4/5]${NC} Mise à jour des dépendances Python..."
+# DÃ©pendances Python
+echo -e "${C}[4/5]${NC} Mise Ã  jour des dÃ©pendances Python..."
 "$INSTALL_DIR/venv/bin/pip" install --quiet --upgrade flask paramiko apscheduler flask-sock
-echo -e "  ${G}✓${NC} Dépendances à jour"
+echo -e "  ${G}âœ“${NC} DÃ©pendances Ã  jour"
 
-# ── 5. Redémarrage et vérification ────────────────────────────────────────────
+# â”€â”€ 5. RedÃ©marrage et vÃ©rification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-echo -e "${C}[5/5]${NC} Redémarrage du service..."
+echo -e "${C}[5/5]${NC} RedÃ©marrage du service..."
 systemctl start "$SERVICE"
 
-# Attendre jusqu'à 8 secondes que le service soit actif
+# Attendre jusqu'Ã  8 secondes que le service soit actif
 for i in 1 2 3 4; do
   sleep 2
   if systemctl is-active "$SERVICE" --quiet; then
@@ -160,10 +175,10 @@ for i in 1 2 3 4; do
 done
 
 if systemctl is-active "$SERVICE" --quiet; then
-  STATUS="${G}✓ actif${NC}"
+  STATUS="${G}âœ“ actif${NC}"
   FAILED=0
 else
-  STATUS="${R}✗ erreur${NC}"
+  STATUS="${R}âœ— erreur${NC}"
   FAILED=1
 fi
 
@@ -173,25 +188,25 @@ PORT=$("$INSTALL_DIR/venv/bin/python3" -c \
 
 echo ""
 if [ "$FAILED" -eq 0 ]; then
-  echo -e "${G}╔══════════════════════════════════════════════════════╗${NC}"
-  echo -e "${G}║         Mise à jour terminée avec succès !           ║${NC}"
-  echo -e "${G}╚══════════════════════════════════════════════════════╝${NC}"
+  echo -e "${G}â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—${NC}"
+  echo -e "${G}â•‘         Mise Ã  jour terminÃ©e avec succÃ¨s !           â•‘${NC}"
+  echo -e "${G}â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•${NC}"
 else
-  echo -e "${R}╔══════════════════════════════════════════════════════╗${NC}"
-  echo -e "${R}║      Mise à jour terminée — service en erreur !      ║${NC}"
-  echo -e "${R}╚══════════════════════════════════════════════════════╝${NC}"
+  echo -e "${R}â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—${NC}"
+  echo -e "${R}â•‘      Mise Ã  jour terminÃ©e â€” service en erreur !      â•‘${NC}"
+  echo -e "${R}â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•${NC}"
 fi
 echo ""
 echo -e "  ${B}Interface web :${NC}  http://$IP:$PORT"
 echo -e "  ${B}Service       :${NC}  $SERVICE (${STATUS})"
 echo ""
 if [ "$FAILED" -eq 1 ]; then
-  echo -e "  ${Y}Dernières lignes du journal :${NC}"
+  echo -e "  ${Y}DerniÃ¨res lignes du journal :${NC}"
   journalctl -u "$SERVICE" -n 8 --no-pager 2>/dev/null | sed 's/^/    /'
   echo ""
 fi
 echo -e "  ${D}systemctl status  $SERVICE${NC}"
 echo -e "  ${D}journalctl -u $SERVICE -f${NC}"
 echo ""
-echo -e "${D}  NXSlab Backup WebUI — NeXoS_20${NC}"
+echo -e "${D}  NXSlab Backup WebUI â€” NeXoS_20${NC}"
 echo ""
