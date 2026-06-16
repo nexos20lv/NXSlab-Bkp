@@ -14,27 +14,29 @@ def health():
     import flask
     c          = load_config()
     uptime_sec = int((datetime.now() - APP_START).total_seconds())
-    remotes_status = []
-    for r in c.get('remotes', []):
-        rid   = r.get('id', '')
-        state = get_backup_state(rid)
-        remotes_status.append({
-            'id':          rid,
-            'name':        r.get('name', ''),
-            'host':        r.get('host', ''),
-            'last_backup': state.get('last_run'),
-            'last_status': state.get('last_status'),
-        })
-    return jsonify({
+    payload = {
         'status':         'ok',
         'version':        '2.1.0',
         'uptime_seconds': uptime_sec,
         'services':       {'samba': svc_state('smbd'), 'ftp': svc_state('vsftpd')},
-        'remotes':        remotes_status,
+        'remotes_count':  len(c.get('remotes', [])),
         'has_paramiko':   HAS_PARAMIKO,
         'has_scheduler':  HAS_SCHEDULER,
         'has_websocket':  flask.current_app.config.get('HAS_SOCK', False),
-    })
+    }
+    # NXS-SEC-013: remote hostnames/names/status are internal-infrastructure
+    # recon — expose the per-remote details only to an authenticated session,
+    # not to anonymous /health callers (monitoring still gets liveness above).
+    if session.get('logged_in'):
+        payload['remotes'] = [
+            {'id':          r.get('id', ''),
+             'name':        r.get('name', ''),
+             'host':        r.get('host', ''),
+             'last_backup': get_backup_state(r.get('id', '')).get('last_run'),
+             'last_status': get_backup_state(r.get('id', '')).get('last_status')}
+            for r in c.get('remotes', [])
+        ]
+    return jsonify(payload)
 
 
 @system_bp.route('/api/status')
