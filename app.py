@@ -25,6 +25,17 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(hours=int(cfg.get('session_hours', 12))),
 )
 
+
+@app.after_request
+def _security_headers(resp):
+    # NXS-SEC-012: conservative, non-breaking defense-in-depth headers. No CSP
+    # here — the UI relies on inline event handlers and CDN assets, so a useful
+    # CSP needs a handler refactor first (tracked as a recommendation).
+    resp.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    resp.headers.setdefault('X-Frame-Options', 'DENY')
+    resp.headers.setdefault('Referrer-Policy', 'no-referrer')
+    return resp
+
 _STATIC_VER = str(int(time.time()))
 
 @app.context_processor
