@@ -3,7 +3,7 @@ import re
 from flask import Blueprint, request, jsonify, session
 from blueprints.auth import login_required, admin_required
 from core.config import load_config, save_config
-from core.helpers import hash_pw
+from core.helpers import hash_pw, verify_pw
 
 users_bp = Blueprint('users', __name__)
 
@@ -24,7 +24,7 @@ def change_password():
     c = load_config()
     for u in c.get('users', []):
         if u.get('username') == username:
-            if hash_pw(current) != u['password_hash']:
+            if not verify_pw(current, u.get('password_hash', ''))[0]:  # NXS-SEC-006
                 return jsonify({'error': 'Mot de passe actuel incorrect'}), 401
             if len(new_pw) < 8:
                 return jsonify({'error': 'Le nouveau mot de passe doit faire au moins 8 caractères'}), 400

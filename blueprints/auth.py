@@ -1,8 +1,8 @@
 """Authentification — décorateurs et routes /login /logout /"""
 from functools import wraps
 from flask import Blueprint, session, request, jsonify, redirect, url_for, render_template
-from core.config import load_config
-from core.helpers import hash_pw
+from core.config import load_config, save_config
+from core.helpers import verify_pw, hash_pw
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -46,13 +46,23 @@ def login():
         username = (data.get('username') or '').strip()
         password = data.get('password') or ''
         for u in c.get('users', []):
-            if u.get('username') == username and hash_pw(password) == u.get('password_hash', ''):
-                session.permanent    = True
-                session['logged_in'] = True
-                session['user']      = username
-                session['role']      = u.get('role', 'readonly')
-                payload = {'ok': True, 'role': session['role']}
-                return jsonify(payload) if request.is_json else redirect(url_for('auth.index'))
+            if u.get('username') != username:
+                continue
+            ok, needs_upgrade = verify_pw(password, u.get('password_hash', ''))
+            if not ok:
+                break
+            if needs_upgrade:  # NXS-SEC-006: transparently rehash legacy SHA-256
+                try:
+                    u['password_hash'] = hash_pw(password)
+                    save_config(c)
+                except Exception:
+                    pass
+            session.permanent    = True
+            session['logged_in'] = True
+            session['user']      = username
+            session['role']      = u.get('role', 'readonly')
+            payload = {'ok': True, 'role': session['role']}
+            return jsonify(payload) if request.is_json else redirect(url_for('auth.index'))
         return (jsonify({'error': 'Identifiants incorrects'}), 401) if request.is_json \
                else render_template('login.html', error='Identifiants incorrects')
     if session.get('logged_in'):
