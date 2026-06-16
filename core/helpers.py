@@ -1,13 +1,41 @@
 """Fonctions utilitaires partagées."""
-import re, subprocess, hashlib
+import re, subprocess, hashlib, hmac
+from werkzeug.security import generate_password_hash, check_password_hash
+
+_LEGACY_SHA256 = re.compile(r'^[0-9a-f]{64}$')
 
 
 def hash_pw(pw: str) -> str:
-    return hashlib.sha256(pw.encode()).hexdigest()
+    # NXS-SEC-006: salted slow KDF (pbkdf2-sha256 via Werkzeug, already a Flask
+    # dependency) instead of the previous unsalted single-round SHA-256.
+    return generate_password_hash(pw, method='pbkdf2:sha256')
+
+
+def verify_pw(pw: str, stored: str):
+    """Return (ok, needs_upgrade). Verifies against the new salted format and,
+    for backward compatibility, legacy unsalted SHA-256 hashes (constant-time).
+    A successful legacy match sets needs_upgrade so the caller can rehash and
+    persist the modern format (NXS-SEC-006)."""
+    stored = stored or ''
+    if _LEGACY_SHA256.match(stored):
+        ok = hmac.compare_digest(hashlib.sha256(pw.encode()).hexdigest(), stored)
+        return ok, ok
+    try:
+        return check_password_hash(stored, pw), False
+    except Exception:
+        return False, False
 
 
 def valid_username(u: str) -> bool:
     return bool(re.match(r'^[a-z_][a-z0-9_.-]{0,30}$', u))
+
+
+def valid_secret(s: str) -> bool:
+    """Reject control characters (newline/CR/NUL/...) in values piped via stdin
+    to line-oriented tools such as chpasswd/smbpasswd. A newline in a password
+    would otherwise smuggle an extra 'user:password' line into chpasswd and let
+    a caller set arbitrary system accounts' passwords (NXS-SEC-004)."""
+    return isinstance(s, str) and not any(ord(ch) < 0x20 or ord(ch) == 0x7f for ch in s)
 
 
 def run(args: list, stdin: str = None, timeout: int = 15):

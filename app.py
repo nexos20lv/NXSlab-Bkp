@@ -3,6 +3,7 @@
 import os
 import time
 import secrets
+from datetime import timedelta
 from flask import Flask
 
 from core.config import load_config
@@ -12,6 +13,48 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024 * 1024
 
 cfg = load_config()
 app.secret_key = cfg.get('secret_key', secrets.token_hex(32))
+
+def _cfg_bool(v, default=False):
+    # Robust truthy parse so a JSON string like "false"/"0" is not treated as
+    # True (which bool("false") would do and break HTTP logins).
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float)):
+        return bool(v)
+    if isinstance(v, str):
+        return v.strip().lower() in ('1', 'true', 'yes', 'on')
+    return default
+
+
+def _cfg_int(v, default, minimum=1):
+    # Safe parse so a bad config value (e.g. "12h") can't crash startup.
+    try:
+        return max(minimum, int(v))
+    except (TypeError, ValueError):
+        return default
+
+
+# NXS-SEC-011: harden the session cookie. SameSite=Lax mitigates CSRF on the
+# state-changing POST API; HttpOnly keeps it out of JS. Secure is configurable
+# (default off so plain-HTTP installs keep working) — set "cookie_secure": true
+# in config.json when serving over HTTPS. The session also gets a finite lifetime.
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=_cfg_bool(cfg.get('cookie_secure', False)),
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=_cfg_int(cfg.get('session_hours', 12), 12)),
+)
+
+
+@app.after_request
+def _security_headers(resp):
+    # NXS-SEC-012: conservative, non-breaking defense-in-depth headers. No CSP
+    # here — the UI relies on inline event handlers and CDN assets, so a useful
+    # CSP needs a handler refactor first (tracked as a recommendation).
+    resp.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    resp.headers.setdefault('X-Frame-Options', 'DENY')
+    resp.headers.setdefault('Referrer-Policy', 'no-referrer')
+    return resp
 
 _STATIC_VER = str(int(time.time()))
 

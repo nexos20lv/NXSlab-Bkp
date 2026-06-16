@@ -1,8 +1,8 @@
 """Routes Samba — /api/samba/*"""
 import configparser
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from blueprints.auth import login_required, admin_required
-from core.helpers import run, shell, valid_username, setup_data_access
+from core.helpers import run, shell, valid_username, valid_secret, setup_data_access
 
 samba_bp = Blueprint('samba', __name__)
 
@@ -50,6 +50,11 @@ def samba_config():
             return jsonify({'content': open(path).read()})
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+    # NXS-SEC-001: writing the system Samba config is admin-only (read stays open
+    # to any logged-in user). Mirrors the @admin_required guard on every other
+    # samba mutation route (control / user add / passwd / delete).
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Droits administrateur requis'}), 403
     content = (request.json or {}).get('content', '')
     try:
         with open(path + '.bak', 'w') as f: f.write(open(path).read())
@@ -83,6 +88,7 @@ def samba_user_add():
     password = d.get('password', '')
     if not valid_username(username): return jsonify({'error': "Nom d'utilisateur invalide"}), 400
     if len(password) < 6:           return jsonify({'error': 'Mot de passe trop court (min. 6 car.)'}), 400
+    if not valid_secret(password):  return jsonify({'error': 'Mot de passe invalide'}), 400  # NXS-SEC-004
     if not run(['id', username])['ok']:
         run(['useradd', '-M', '-s', '/usr/sbin/nologin', username])
     setup_data_access(username)
@@ -98,6 +104,7 @@ def samba_user_passwd():
     password = d.get('password', '')
     if not valid_username(username): return jsonify({'error': "Nom d'utilisateur invalide"}), 400
     if len(password) < 6:           return jsonify({'error': 'Mot de passe trop court (min. 6 car.)'}), 400
+    if not valid_secret(password):  return jsonify({'error': 'Mot de passe invalide'}), 400  # NXS-SEC-004
     r = run(['smbpasswd', '-s', username], stdin=f"{password}\n{password}\n")
     return jsonify({'ok': r['ok']})
 

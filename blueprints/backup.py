@@ -71,7 +71,7 @@ def backup_settings(remote_id):
 
 
 @backup_bp.route('/api/backup/test/<remote_id>', methods=['POST'])
-@login_required
+@admin_required  # NXS-SEC-008: accepts attacker-supplied host/key_path/password -> admin only
 def backup_test(remote_id):
     remote = get_remote(remote_id)
     if not remote:

@@ -9,10 +9,17 @@ from core.backup_core import ssh_connect
 _TIMEOUT_EXC = (socket.timeout, TimeoutError)
 
 
+def terminal_authorized(sess) -> bool:
+    """NXS-SEC-003: the web SSH terminal grants an interactive shell on the
+    remote VPS using stored credentials, so it must be admin-only — being merely
+    authenticated (e.g. a readonly account) is not sufficient."""
+    return bool(sess.get('logged_in')) and sess.get('role') == 'admin'
+
+
 def register_terminal(sock):
     @sock.route('/ws/terminal/<remote_id>')
     def terminal_ws(ws, remote_id):
-        if not session.get('logged_in'):
+        if not terminal_authorized(session):
             try:
                 ws.send('\r\n[Non autorisé]\r\n')
                 ws.close()
