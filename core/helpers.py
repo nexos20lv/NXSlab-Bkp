@@ -10,6 +10,14 @@ def valid_username(u: str) -> bool:
     return bool(re.match(r'^[a-z_][a-z0-9_.-]{0,30}$', u))
 
 
+def valid_secret(s: str) -> bool:
+    """Reject control characters (newline/CR/NUL/...) in values piped via stdin
+    to line-oriented tools such as chpasswd/smbpasswd. A newline in a password
+    would otherwise smuggle an extra 'user:password' line into chpasswd and let
+    a caller set arbitrary system accounts' passwords (NXS-SEC-004)."""
+    return isinstance(s, str) and not any(ord(ch) < 0x20 or ord(ch) == 0x7f for ch in s)
+
+
 def run(args: list, stdin: str = None, timeout: int = 15):
     try:
         r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, input=stdin)

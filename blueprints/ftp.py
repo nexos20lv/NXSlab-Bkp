@@ -3,7 +3,7 @@ import os
 import re
 from flask import Blueprint, request, jsonify, session
 from blueprints.auth import login_required, admin_required
-from core.helpers import run, shell, valid_username, setup_data_access
+from core.helpers import run, shell, valid_username, valid_secret, setup_data_access
 from core.config import get_data_dir
 
 ftp_bp = Blueprint('ftp', __name__)
@@ -82,6 +82,7 @@ def ftp_user_add():
     data_dir = get_data_dir()
     if not valid_username(username): return jsonify({'error': "Nom d'utilisateur invalide"}), 400
     if len(password) < 6:           return jsonify({'error': 'Mot de passe trop court (min. 6 car.)'}), 400
+    if not valid_secret(password):  return jsonify({'error': 'Mot de passe invalide'}), 400  # NXS-SEC-004
     r = run(['useradd', '-d', data_dir, '-s', '/usr/sbin/nologin', username])
     if not r['ok'] and 'already exists' not in (r['err'] or ''):
         return jsonify({'error': r['err']}), 500
@@ -102,6 +103,7 @@ def ftp_user_passwd():
     password = d.get('password', '')
     if not valid_username(username): return jsonify({'error': "Nom d'utilisateur invalide"}), 400
     if len(password) < 6:           return jsonify({'error': 'Mot de passe trop court (min. 6 car.)'}), 400
+    if not valid_secret(password):  return jsonify({'error': 'Mot de passe invalide'}), 400  # NXS-SEC-004
     r = run(['chpasswd'], stdin=f"{username}:{password}\n")
     return jsonify({'ok': r['ok'], 'message': r['err'] or 'Mot de passe modifié'})
 
