@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import threading
 import urllib.request
+import urllib.parse
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -85,6 +86,11 @@ def verify_archive(local_path: str, compression: str) -> bool:
 
 def notify(url: str, payload: dict):
     if not url:
+        return
+    # NXS-SEC-010: only deliver to http(s) webhooks. urllib would otherwise honor
+    # file://, ftp://, gopher://, dict://, ... turning a webhook field into an
+    # SSRF / local-resource primitive.
+    if urllib.parse.urlparse(url).scheme.lower() not in ('http', 'https'):
         return
     try:
         data = json.dumps(payload).encode()
