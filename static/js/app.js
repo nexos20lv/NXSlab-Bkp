@@ -21,7 +21,22 @@ function toast(msg, type = 'info') {
 }
 
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/`/g,'&#96;');
+}
+
+// NXS-SEC-007: safe to embed inside a single-quoted JS string literal that sits
+// inside a double-quoted HTML attribute, e.g. onclick="fn('${escJs(x)}')". The
+// browser HTML-decodes the attribute value BEFORE the JS string is parsed, so
+// the quote/backslash/newlines must be escaped with JS backslash sequences (not
+// HTML entities), while characters that matter to the HTML attribute parser are
+// entity-encoded. escHtml alone is insufficient for this context.
+function escJs(s) {
+  return String(s)
+    .replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+    .replace(/\r/g, '\\r').replace(/\n/g, '\\n')
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // ─── Tabs ─────────────────────────────────────────────────────────────────
@@ -160,8 +175,8 @@ async function refreshSambaUsers() {
           <td class="mono">${escHtml(u.username)}</td>
           <td class="mono" style="color:var(--text-muted)">${escHtml(u.uid)}</td>
           <td><div style="display:flex;gap:4px;">
-            <button class="btn-sm" onclick="openModal('samba-user-passwd','${escHtml(u.username)}')"><i class="fa-solid fa-key"></i></button>
-            <button class="btn-sm danger" onclick="openModal('samba-user-del','${escHtml(u.username)}')"><i class="fa-solid fa-trash"></i></button>
+            <button class="btn-sm" onclick="openModal('samba-user-passwd','${escJs(u.username)}')"><i class="fa-solid fa-key"></i></button>
+            <button class="btn-sm danger" onclick="openModal('samba-user-del','${escJs(u.username)}')"><i class="fa-solid fa-trash"></i></button>
           </div></td>
         </tr>`).join('');
   } catch(e) { toast('Erreur users Samba: ' + e.message, 'err'); }
@@ -203,14 +218,14 @@ async function refreshFtpUsers() {
           <td>${typeBadge}${lockBadge}</td>
           <td><span style="font-family:var(--font-mono);font-size:.62rem;color:${u.locked?'var(--down)':'var(--up)'};">${u.locked?'Verrouillé':'Actif'}</span></td>
           <td><div style="display:flex;gap:3px;flex-wrap:wrap;">
-            <button class="btn-sm" title="Mot de passe" onclick="openModal('ftp-user-passwd','${escHtml(u.username)}')"><i class="fa-solid fa-key"></i></button>
-            <button class="btn-sm" title="${u.ftp_only?'Activer shell':'FTP seulement'}" onclick="toggleFtpShell('${escHtml(u.username)}',${!u.ftp_only})">
+            <button class="btn-sm" title="Mot de passe" onclick="openModal('ftp-user-passwd','${escJs(u.username)}')"><i class="fa-solid fa-key"></i></button>
+            <button class="btn-sm" title="${u.ftp_only?'Activer shell':'FTP seulement'}" onclick="toggleFtpShell('${escJs(u.username)}',${!u.ftp_only})">
               <i class="fa-solid ${u.ftp_only?'fa-terminal':'fa-ban'}"></i>
             </button>
-            <button class="btn-sm" title="${u.locked?'Déverrouiller':'Verrouiller'}" onclick="toggleFtpLock('${escHtml(u.username)}',${!u.locked})">
+            <button class="btn-sm" title="${u.locked?'Déverrouiller':'Verrouiller'}" onclick="toggleFtpLock('${escJs(u.username)}',${!u.locked})">
               <i class="fa-solid ${u.locked?'fa-lock-open':'fa-lock'}"></i>
             </button>
-            <button class="btn-sm danger" title="Supprimer" onclick="openModal('ftp-user-del','${escHtml(u.username)}')"><i class="fa-solid fa-trash"></i></button>
+            <button class="btn-sm danger" title="Supprimer" onclick="openModal('ftp-user-del','${escJs(u.username)}')"><i class="fa-solid fa-trash"></i></button>
           </div></td>
         </tr>`;
       }).join('');
@@ -337,7 +352,7 @@ function renderBreadcrumb(path) {
     if (i === parts.length - 1) {
       html += `<span class="bc-part active">${escHtml(part)}</span>`;
     } else {
-      html += `<span class="bc-part" onclick="navigateTo('${escHtml(navPath)}')">${escHtml(part)}</span>`;
+      html += `<span class="bc-part" onclick="navigateTo('${escJs(navPath)}')">${escHtml(part)}</span>`;
     }
   });
   bc.innerHTML = html;
@@ -349,7 +364,7 @@ function renderFiles(entries, parent) {
   let html = '';
 
   if (parent !== null && parent !== undefined) {
-    html += `<tr onclick="navigateTo('${escHtml(parent)}')" style="cursor:pointer;">
+    html += `<tr onclick="navigateTo('${escJs(parent)}')" style="cursor:pointer;">
       <td><i class="fa-solid fa-turn-up" style="color:var(--text-muted);font-size:.75rem;"></i></td>
       <td class="mono" style="color:var(--text-muted);">..</td>
       <td>—</td><td>—</td><td></td>
@@ -364,7 +379,7 @@ function renderFiles(entries, parent) {
   entries.forEach((e, i) => {
     const ic = fileIcon(e);
     const nameCell = e.type === 'dir'
-      ? `<span class="file-name-dir" onclick="navigateTo('${escHtml(e.path)}')">${escHtml(e.name)}<span class="file-slash">/</span></span>`
+      ? `<span class="file-name-dir" onclick="navigateTo('${escJs(e.path)}')">${escHtml(e.name)}<span class="file-slash">/</span></span>`
       : `<span class="file-name-file">${escHtml(e.name)}</span>`;
 
     const actions = e.type === 'file'
@@ -821,7 +836,7 @@ async function refreshRemoteCards() {
         ${nextLine}
         <div class="remote-card-actions" onclick="event.stopPropagation()">
           <button class="remote-card-btn" onclick="openEditRemote('${r.id}')"><i class="fa-solid fa-pen"></i> Éditer</button>
-          <button class="remote-card-btn danger" onclick="deleteRemote('${r.id}','${escHtml(r.name)}')"><i class="fa-solid fa-trash"></i></button>
+          <button class="remote-card-btn danger" onclick="deleteRemote('${r.id}','${escJs(r.name)}')"><i class="fa-solid fa-trash"></i></button>
         </div>
       </div>`;
     }).join('');
@@ -1057,7 +1072,7 @@ async function probeDockerContainers() {
           <i class="fa-brands fa-docker" style="color:var(--accent);font-size:.75rem;"></i>
           <span style="flex:1;font-family:var(--font-mono);font-size:.75rem;">${escHtml(c.name)}</span>
           <span style="color:var(--text-muted);font-size:.62rem;">${escHtml(c.image)}</span>
-          <button class="btn-sm" style="padding:2px 7px;" onclick="addPathItem('bkp-docker-list','container-name','${escHtml(c.name)}')">
+          <button class="btn-sm" style="padding:2px 7px;" onclick="addPathItem('bkp-docker-list','container-name','${escJs(c.name)}')">
             <i class="fa-solid fa-plus"></i>
           </button>
         </div>`).join('');
@@ -1143,8 +1158,8 @@ async function refreshBackupList() {
       <td><i class="fa-solid ${sIcon[b.status]||'fa-circle'}" style="color:${sColor[b.status]||'var(--text-muted)'};font-size:.75rem;"></i></td>
       <td style="font-family:var(--font-mono);font-size:.60rem;color:var(--text-muted);">${escHtml(b.targets||'')}</td>
       <td><div style="display:flex;gap:3px;">
-        <button class="btn-sm" onclick="showManifest('${escHtml(b.id)}')" title="Manifest"><i class="fa-solid fa-list"></i></button>
-        <button class="btn-sm danger" onclick="deleteBackup('${escHtml(b.id)}')" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+        <button class="btn-sm" onclick="showManifest('${escJs(b.id)}')" title="Manifest"><i class="fa-solid fa-list"></i></button>
+        <button class="btn-sm danger" onclick="deleteBackup('${escJs(b.id)}')" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
       </div></td>
     </tr>`).join('');
     sel.innerHTML = '<option value="">— sélectionner —</option>' +
@@ -1244,8 +1259,8 @@ async function refreshUsers() {
       <td class="mono">${escHtml(u.username)}</td>
       <td><span class="role-badge ${u.role}">${u.role === 'admin' ? '<i class="fa-solid fa-shield-halved"></i> admin' : '<i class="fa-solid fa-eye"></i> readonly'}</span></td>
       <td><div style="display:flex;gap:4px;">
-        <button class="btn-sm" onclick="openModal('user-role','${escHtml(u.username)}|${u.role}')"><i class="fa-solid fa-user-gear"></i></button>
-        <button class="btn-sm danger" onclick="openModal('user-del','${escHtml(u.username)}')"><i class="fa-solid fa-trash"></i></button>
+        <button class="btn-sm" onclick="openModal('user-role','${escJs(u.username)}|${u.role}')"><i class="fa-solid fa-user-gear"></i></button>
+        <button class="btn-sm danger" onclick="openModal('user-del','${escJs(u.username)}')"><i class="fa-solid fa-trash"></i></button>
       </div></td>
     </tr>`).join('');
   } catch { /* silent */ }
