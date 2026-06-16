@@ -1,7 +1,7 @@
 """Routes FTP — /api/ftp/*"""
 import os
 import re
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from blueprints.auth import login_required, admin_required
 from core.helpers import run, shell, valid_username, setup_data_access
 from core.config import get_data_dir
@@ -30,6 +30,11 @@ def ftp_config():
             return jsonify({'content': open(path).read()})
         except Exception as e:
             return jsonify({'error': str(e)}), 500
+    # NXS-SEC-001: writing the system vsftpd config is admin-only (read stays open
+    # to any logged-in user). Mirrors the @admin_required guard on every other
+    # ftp mutation route (control / user add / passwd / delete / shell / lock).
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Droits administrateur requis'}), 403
     content = (request.json or {}).get('content', '')
     try:
         orig = open(path).read()
