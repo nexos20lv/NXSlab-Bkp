@@ -65,6 +65,15 @@ def pytest_sessionfinish(session, exitstatus):
     shutil.rmtree(_TMP, ignore_errors=True)
 
 
+@pytest.fixture(autouse=True)
+def _reset_login_throttle():
+    # NXS-SEC-009 throttle is module-level global state; reset it before each
+    # test so failed-login tests can't lock out unrelated ones.
+    import blueprints.auth as _auth
+    _auth.reset_login_throttle()
+    yield
+
+
 @pytest.fixture
 def app():
     return appmod.app
