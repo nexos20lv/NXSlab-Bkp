@@ -40,4 +40,11 @@ assert.ok(!/[\n\r]/.test(escJs("a\nb")), 'escJs must escape newlines');
 const roundtrip = new Function("return '" + escJs(payload) + "'")();
 assert.strictEqual(roundtrip, payload, 'payload must remain an inert string, not break out');
 
+// 4. JS line terminators U+2028 / U+2029 also break a JS string literal; they
+//    must be escaped too (built via fromCharCode so this file stays pure ASCII).
+const LS = String.fromCharCode(0x2028), PS = String.fromCharCode(0x2029);
+const sepOut = escJs("a" + LS + "b" + PS + "c");
+assert.ok(!sepOut.includes(LS) && !sepOut.includes(PS), 'escJs must escape U+2028/U+2029');
+assert.ok(sepOut.includes("\\u2028") && sepOut.includes("\\u2029"), 'escJs must emit \\u escapes for separators');
+
 console.log('NXS-SEC-007 escaping tests: PASS');

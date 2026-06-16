@@ -40,6 +40,16 @@ def _login_note(key, success):
             _LOGIN_ATTEMPTS.setdefault(key, []).append(time.time())
 
 
+def _login_retry_after(key):
+    """Seconds until the oldest retained failure for this key ages out of the
+    window — an accurate Retry-After rather than the full window length."""
+    with _LOGIN_LOCK:
+        ts = _LOGIN_ATTEMPTS.get(key, [])
+        if not ts:
+            return LOGIN_WINDOW
+        return max(1, int(LOGIN_WINDOW - (time.time() - min(ts))))
+
+
 def reset_login_throttle():
     """Clear all recorded attempts (used by tests)."""
     with _LOGIN_LOCK:
@@ -86,9 +96,9 @@ def login():
             body = jsonify({'error': msg}) if request.is_json \
                    else render_template('login.html', error=msg)
             resp = make_response(body, 429)
-            resp.headers['Retry-After'] = str(LOGIN_WINDOW)
+            resp.headers['Retry-After'] = str(_login_retry_after(rl_key))
             return resp
-        data     = request.get_json() or request.form
+        data     = request.get_json(silent=True) or request.form
         c        = load_config()
         username = (data.get('username') or '').strip()
         password = data.get('password') or ''

@@ -28,14 +28,17 @@ def health():
     # recon — expose the per-remote details only to an authenticated session,
     # not to anonymous /health callers (monitoring still gets liveness above).
     if session.get('logged_in'):
-        payload['remotes'] = [
-            {'id':          r.get('id', ''),
-             'name':        r.get('name', ''),
-             'host':        r.get('host', ''),
-             'last_backup': get_backup_state(r.get('id', '')).get('last_run'),
-             'last_status': get_backup_state(r.get('id', '')).get('last_status')}
-            for r in c.get('remotes', [])
-        ]
+        remotes = []
+        for r in c.get('remotes', []):
+            state = get_backup_state(r.get('id', ''))
+            remotes.append({
+                'id':          r.get('id', ''),
+                'name':        r.get('name', ''),
+                'host':        r.get('host', ''),
+                'last_backup': state.get('last_run'),
+                'last_status': state.get('last_status'),
+            })
+        payload['remotes'] = remotes
     return jsonify(payload)
 
 

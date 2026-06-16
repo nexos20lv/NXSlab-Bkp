@@ -35,6 +35,7 @@ function escJs(s) {
   return String(s)
     .replace(/\\/g, '\\\\').replace(/'/g, "\\'")
     .replace(/\r/g, '\\r').replace(/\n/g, '\\n')
+    .replace(new RegExp('[' + String.fromCharCode(0x2028, 0x2029) + ']', 'g'), function (c) { return '\\u' + c.charCodeAt(0).toString(16); })
     .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
     .replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

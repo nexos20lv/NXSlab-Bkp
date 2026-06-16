@@ -38,10 +38,14 @@ def test_nxs_sec_006_login_upgrades_legacy_hash(client):
     # conftest seeds legacy SHA-256 hashes; logging in must succeed AND rewrite
     # the stored hash to the new salted format.
     write_config()
-    assert _HEX64.match(json.load(open(_CONFIG_FILE))["users"][0]["password_hash"])
+    with open(_CONFIG_FILE) as f:
+        before = json.load(f)
+    assert _HEX64.match(before["users"][0]["password_hash"])
     r = login(client, "admin", "adminpass123")
     assert r.status_code == 200
-    stored = json.load(open(_CONFIG_FILE))["users"][0]["password_hash"]
+    with open(_CONFIG_FILE) as f:
+        after = json.load(f)
+    stored = after["users"][0]["password_hash"]
     assert not _HEX64.match(stored), "legacy hash must be upgraded after login"
     assert stored.startswith("pbkdf2:")
 
