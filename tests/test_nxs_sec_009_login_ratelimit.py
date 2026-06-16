@@ -29,3 +29,13 @@ def test_nxs_sec_009_other_account_not_locked(client):
 def test_nxs_sec_009_correct_login_not_throttled(client):
     auth_mod.reset_login_throttle()
     assert login(client, "admin", "adminpass123").status_code == 200
+
+
+def test_nxs_sec_009_throttle_prunes_stale_keys():
+    # Stale keys (older than the window) must be pruned so the table can't grow
+    # without bound under sustained attack.
+    import time
+    auth_mod.reset_login_throttle()
+    auth_mod._LOGIN_ATTEMPTS[("203.0.113.1", "ghost")] = [time.time() - auth_mod.LOGIN_WINDOW - 10]
+    auth_mod._login_rate_limited(("203.0.113.2", "other"))
+    assert ("203.0.113.1", "ghost") not in auth_mod._LOGIN_ATTEMPTS

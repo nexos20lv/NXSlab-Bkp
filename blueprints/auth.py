@@ -27,6 +27,10 @@ def _login_key():
 def _login_rate_limited(key):
     now = time.time()
     with _LOGIN_LOCK:
+        # Opportunistic prune so the table cannot grow unbounded under sustained
+        # attack or many distinct (ip, user) keys (memory-exhaustion guard).
+        for k in [k for k, ts in _LOGIN_ATTEMPTS.items() if not ts or now - max(ts) >= LOGIN_WINDOW]:
+            del _LOGIN_ATTEMPTS[k]
         recent = [t for t in _LOGIN_ATTEMPTS.get(key, []) if now - t < LOGIN_WINDOW]
         _LOGIN_ATTEMPTS[key] = recent
         return len(recent) >= LOGIN_MAX_FAILS
