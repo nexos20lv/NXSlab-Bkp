@@ -1,7 +1,7 @@
 """Routes explorateur de fichiers — /api/files/*"""
 import os, shutil
 from flask import Blueprint, request, jsonify, send_file
-from blueprints.auth import login_required
+from blueprints.auth import login_required, admin_required
 from core.config import get_data_dir
 from core.helpers import human_size
 from datetime import datetime
@@ -60,7 +60,7 @@ def files_download():
 
 
 @files_bp.route('/api/files/upload', methods=['POST'])
-@login_required
+@admin_required  # NXS-SEC-002: mutating data under DATA_DIR is admin-only
 def files_upload():
     rel  = request.args.get('path', '/')
     full = _safe_path(rel)
@@ -78,7 +78,7 @@ def files_upload():
 
 
 @files_bp.route('/api/files/mkdir', methods=['POST'])
-@login_required
+@admin_required  # NXS-SEC-002: mutating data under DATA_DIR is admin-only
 def files_mkdir():
     d      = request.json or {}
     parent = d.get('path', '/')
@@ -95,7 +95,7 @@ def files_mkdir():
 
 
 @files_bp.route('/api/files/delete', methods=['POST'])
-@login_required
+@admin_required  # NXS-SEC-002: mutating data under DATA_DIR is admin-only
 def files_delete():
     rel  = (request.json or {}).get('path', '')
     full = _safe_path(rel)
@@ -109,7 +109,7 @@ def files_delete():
 
 
 @files_bp.route('/api/files/rename', methods=['POST'])
-@login_required
+@admin_required  # NXS-SEC-002: mutating data under DATA_DIR is admin-only
 def files_rename():
     d        = request.json or {}
     rel      = d.get('path', '')
