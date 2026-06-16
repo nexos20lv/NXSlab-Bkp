@@ -26,7 +26,10 @@ def _migrate_config(c):
         changed = True
     for u in c.get('users', []):
         if 'role' not in u:
-            u['role'] = 'admin'
+            # NXS-SEC-005: fail closed — a user record without an explicit role
+            # defaults to least privilege. The legacy single-admin is assigned
+            # 'admin' explicitly by the branches above, so this does not lock it out.
+            u['role'] = 'readonly'
             changed = True
     if 'remote' in c and 'remotes' not in c:
         remote = c.pop('remote', {})

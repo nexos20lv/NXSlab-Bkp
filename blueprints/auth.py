@@ -28,7 +28,9 @@ def admin_required(f):
             c        = load_config()
             username = session.get('user', '')
             u        = next((u for u in c.get('users', []) if u.get('username') == username), None)
-            role     = u.get('role', 'admin') if u else 'admin'
+            # NXS-SEC-005: fail closed — an unknown user or a record without an
+            # explicit role must NOT be treated as admin.
+            role     = u.get('role', 'readonly') if u else 'readonly'
             session['role'] = role
         if role != 'admin':
             return jsonify({'error': 'Droits administrateur requis'}), 403
