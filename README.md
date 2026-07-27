@@ -1,11 +1,11 @@
 <div align="center">
-  ![NXSlab Backup Banner](https://capsule-render.vercel.app/api?type=waving&color=0:7b2cbf,100:c77dff&height=200&section=header&text=NXSlab%20Backup&fontSize=55&fontAlignY=40&animation=twinkling&desc=Outil%20Python%20de%20Sauvegarde%20Automatis%C3%A9e&descAlignY=60&descAlign=50&fontColor=ffffff)
+  <img src="https://capsule-render.vercel.app/api?type=waving&amp;color=0:7b2cbf,100:c77dff&amp;height=200&amp;section=header&amp;text=NXSlab%20Backup&amp;fontSize=55&amp;fontAlignY=40&amp;animation=twinkling&amp;desc=Outil%20Python%20de%20Sauvegarde%20Automatis%C3%A9e&amp;descAlignY=60&amp;descAlign=50&amp;fontColor=ffffff" alt="NXSlab Backup Banner" />
 
   <p align="center">
-    ![Python](https://img.shields.io/badge/Language-Python_3.x-3776AB?style=for-the-badge&logo=python&logoColor=white)
-    ![CLI Tool](https://img.shields.io/badge/Type-CLI_Utility-4A5568?style=for-the-badge)
-    ![Cron Backup](https://img.shields.io/badge/Feature-Automated_Cron-2ECC71?style=for-the-badge)
-    ![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+    <img src="https://img.shields.io/badge/Language-Python_3.x-3776AB?style=for-the-badge&amp;logo=python&amp;logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/Type-CLI_Utility-4A5568?style=for-the-badge" alt="CLI Tool" />
+    <img src="https://img.shields.io/badge/Feature-Automated_Cron-2ECC71?style=for-the-badge" alt="Cron Backup" />
+    <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License" />
   </p>
 
   <p align="center">
