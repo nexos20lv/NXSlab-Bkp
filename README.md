@@ -1,5 +1,5 @@
 <div align="center">
-  ![NXSlab Backup Banner](https://capsule-render.vercel.app/api?type=waving&color=0:7b2cbf,100:c77dff&height=200&section=header&text=NXSlab%20Backup&fontSize=55&fontAlignY=40&animation=twinkling&desc=Outil%20Python%20de%20Sauvegarde%20Automatis%C3%A9e&descAlignY=60&descAlign=50)
+  ![NXSlab Backup Banner](https://capsule-render.vercel.app/api?type=waving&color=0:7b2cbf,100:c77dff&height=200&section=header&text=NXSlab%20Backup&fontSize=55&fontAlignY=40&animation=twinkling&desc=Outil%20Python%20de%20Sauvegarde%20Automatis%C3%A9e&descAlignY=60&descAlign=50&fontColor=ffffff)
 
   <p align="center">
     ![Python](https://img.shields.io/badge/Language-Python_3.x-3776AB?style=for-the-badge&logo=python&logoColor=white)
